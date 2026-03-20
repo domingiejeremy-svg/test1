@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wheel Game — Roue des cadeaux
  * Description: Hébergez des jeux de roue personnalisés pour vos clients. Chaque campagne a sa propre URL, ses propres prix et son propre suivi des participations.
- * Version:     1.4.2
+ * Version:     1.5.0
  * Author:      Votre Nom
  * License:     GPL v2 or later
  * Text Domain: wheel-game
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'WHEEL_GAME_VERSION', '1.4.2' );
+define( 'WHEEL_GAME_VERSION', '1.5.0' );
 define( 'WHEEL_GAME_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WHEEL_GAME_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -40,12 +40,22 @@ class Wheel_Game {
         add_filter( 'manage_edit-wheel_campaign_sortable_columns',   [ $this, 'sortable_columns' ] );
 
         // AJAX (connecté + non connecté pour le jeu public)
-        add_action( 'wp_ajax_nopriv_wheel_save_play', [ $this, 'ajax_save_play' ] );
-        add_action( 'wp_ajax_wheel_save_play',        [ $this, 'ajax_save_play' ] );
+        add_action( 'wp_ajax_nopriv_wheel_save_play',      [ $this, 'ajax_save_play' ] );
+        add_action( 'wp_ajax_wheel_save_play',             [ $this, 'ajax_save_play' ] );
+
+        // AJAX admin — suivi Google
+        add_action( 'wp_ajax_wheel_fetch_google_stats',    [ $this, 'ajax_fetch_google_stats' ] );
+        add_action( 'wp_ajax_wheel_save_google_api_key',   [ $this, 'ajax_save_google_api_key' ] );
+
+        // Cron quotidien
+        add_action( 'wheel_daily_google_fetch', [ $this, 'daily_fetch_google_stats' ] );
+
+        // Mise à jour BDD sans réactivation
+        add_action( 'admin_init', [ $this, 'maybe_upgrade_db' ] );
 
         // Activation / désactivation
         register_activation_hook( __FILE__,   [ $this, 'activate' ] );
-        register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
+        register_deactivation_hook( __FILE__, [ $this, 'deactivate' ] );
     }
 
     /* ── Activation ─────────────────────────────────────────────────────────── */
@@ -54,13 +64,29 @@ class Wheel_Game {
         $this->register_cpt();
         flush_rewrite_rules();
         $this->create_table();
+        if ( ! wp_next_scheduled( 'wheel_daily_google_fetch' ) ) {
+            wp_schedule_event( time(), 'daily', 'wheel_daily_google_fetch' );
+        }
+    }
+
+    public function deactivate() {
+        wp_clear_scheduled_hook( 'wheel_daily_google_fetch' );
+        flush_rewrite_rules();
+    }
+
+    public function maybe_upgrade_db() {
+        if ( get_option( 'wheel_game_db_version' ) !== '1.1' ) {
+            $this->create_table();
+            update_option( 'wheel_game_db_version', '1.1' );
+        }
     }
 
     public function create_table() {
         global $wpdb;
-        $table   = $wpdb->prefix . 'wheel_plays';
         $charset = $wpdb->get_charset_collate();
-        $sql     = "CREATE TABLE IF NOT EXISTS {$table} (
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+        dbDelta( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wheel_plays (
             id           bigint(20)   NOT NULL AUTO_INCREMENT,
             campaign_id  bigint(20)   NOT NULL,
             prize_index  tinyint(3)   NOT NULL DEFAULT 0,
@@ -69,9 +95,18 @@ class Wheel_Game {
             ip_hash      varchar(64)  NOT NULL DEFAULT '',
             PRIMARY KEY  (id),
             KEY campaign_id (campaign_id)
-        ) {$charset};";
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta( $sql );
+        ) {$charset};" );
+
+        dbDelta( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wheel_google_stats (
+            id           bigint(20)   NOT NULL AUTO_INCREMENT,
+            campaign_id  bigint(20)   NOT NULL,
+            rating       decimal(3,1) NOT NULL DEFAULT 0.0,
+            review_count int(11)      NOT NULL DEFAULT 0,
+            recorded_at  date         NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY campaign_date (campaign_id, recorded_at),
+            KEY campaign_id (campaign_id)
+        ) {$charset};" );
     }
 
     /* ── Custom Post Type ───────────────────────────────────────────────────── */
@@ -196,6 +231,12 @@ class Wheel_Game {
             'wheel_sidebar',
             '📊 Statistiques & QR Code',
             [ $this, 'render_sidebar_box' ],
+            'wheel_campaign', 'side', 'default'
+        );
+        add_meta_box(
+            'wheel_google_tracking',
+            '📈 Suivi des avis Google',
+            [ $this, 'render_google_tracking_box' ],
             'wheel_campaign', 'side', 'default'
         );
     }
@@ -329,11 +370,26 @@ class Wheel_Game {
             <div class="wg-section">
                 <h3>🔗 Lien Google Reviews</h3>
                 <div class="wg-info">⚠️ Ce lien est l'élément le plus important : c'est là que vos clients seront redirigés pour laisser un avis.</div>
-                <div class="wg-field">
-                    <label>URL Google Reviews</label>
-                    <input type="url" name="reward_google_url" value="<?php echo esc_attr( $g_url ); ?>"
-                           placeholder="https://search.google.com/local/writereview?placeid=...">
-                    <p class="wg-hint">Trouvez votre Place ID sur <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank">Google Place ID Finder</a></p>
+                <?php
+                $g_place_id = get_post_meta( $post->ID, '_google_place_id', true ) ?: '';
+                // Extraire le Place ID de l'URL si non défini
+                if ( ! $g_place_id && $g_url ) {
+                    parse_str( (string) parse_url( $g_url, PHP_URL_QUERY ), $qs );
+                    $g_place_id = $qs['placeid'] ?? $qs['place_id'] ?? '';
+                }
+                ?>
+                <div class="wg-grid2">
+                    <div class="wg-field">
+                        <label>URL Google Reviews</label>
+                        <input type="url" name="reward_google_url" value="<?php echo esc_attr( $g_url ); ?>"
+                               placeholder="https://search.google.com/local/writereview?placeid=...">
+                    </div>
+                    <div class="wg-field">
+                        <label>Google Place ID <span style="color:#6c5ce7">(suivi avis)</span></label>
+                        <input type="text" name="google_place_id" value="<?php echo esc_attr( $g_place_id ); ?>"
+                               placeholder="ChIJxxxxxxxx">
+                        <p class="wg-hint">Requis pour le suivi automatique. Trouvez-le sur <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank">Place ID Finder</a></p>
+                    </div>
                 </div>
             </div>
 
@@ -543,6 +599,16 @@ class Wheel_Game {
             }
         }
 
+        // Place ID Google
+        if ( isset( $_POST['google_place_id'] ) ) {
+            update_post_meta( $post_id, '_google_place_id', sanitize_text_field( wp_unslash( $_POST['google_place_id'] ) ) );
+        }
+
+        // Clé API Google (globale)
+        if ( isset( $_POST['google_api_key'] ) ) {
+            update_option( 'wheel_game_google_api_key', sanitize_text_field( wp_unslash( $_POST['google_api_key'] ) ) );
+        }
+
         // Logo (URL)
         if ( isset( $_POST['reward_logo'] ) ) {
             update_post_meta( $post_id, '_reward_logo', esc_url_raw( wp_unslash( $_POST['reward_logo'] ) ) );
@@ -611,6 +677,229 @@ class Wheel_Game {
         );
 
         wp_send_json_success( [ 'prize_label' => $prize_label ] );
+    }
+
+    /* ── Meta box : suivi des avis Google ───────────────────────────────────── */
+
+    public function render_google_tracking_box( $post ) {
+        global $wpdb;
+        $gtable   = $wpdb->prefix . 'wheel_google_stats';
+        $api_key  = get_option( 'wheel_game_google_api_key', '' );
+        $place_id = get_post_meta( $post->ID, '_google_place_id', true ) ?: '';
+
+        $latest  = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$gtable} WHERE campaign_id = %d ORDER BY recorded_at DESC LIMIT 1",
+            $post->ID
+        ) );
+        $first   = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$gtable} WHERE campaign_id = %d ORDER BY recorded_at ASC LIMIT 1",
+            $post->ID
+        ) );
+        $history = $wpdb->get_results( $wpdb->prepare(
+            "SELECT * FROM {$gtable} WHERE campaign_id = %d ORDER BY recorded_at DESC LIMIT 60",
+            $post->ID
+        ) );
+
+        $nonce = wp_create_nonce( 'wheel_google' );
+        ?>
+        <p style="font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Clé API Google Places</p>
+        <input type="text" name="google_api_key" id="wg-api-key"
+               value="<?php echo esc_attr( $api_key ); ?>"
+               style="width:100%;font-size:11px;margin-bottom:3px" placeholder="AIzaSy...">
+        <p style="font-size:11px;color:#999;margin-bottom:12px">
+            Partagée entre toutes les campagnes.
+            <a href="https://console.cloud.google.com/apis/library/places-backend.googleapis.com" target="_blank">Activer Places API →</a>
+        </p>
+
+        <?php if ( $latest ) : ?>
+        <hr style="margin:10px 0">
+        <p style="font-size:12px;font-weight:700;color:#666;margin-bottom:8px">
+            Dernière mesure — <span style="font-weight:400"><?php echo esc_html( $latest->recorded_at ); ?></span>
+        </p>
+        <div style="display:flex;gap:8px;margin-bottom:8px;text-align:center">
+            <div style="flex:1;background:#f8f9fb;border-radius:8px;padding:8px 4px">
+                <div style="font-size:20px;font-weight:800;color:#6c5ce7"><?php echo number_format( (float) $latest->rating, 1 ); ?> ⭐</div>
+                <div style="font-size:10px;color:#999;margin-top:2px">Note moy.</div>
+            </div>
+            <div style="flex:1;background:#f8f9fb;border-radius:8px;padding:8px 4px">
+                <div style="font-size:20px;font-weight:800;color:#6c5ce7"><?php echo number_format( (int) $latest->review_count ); ?></div>
+                <div style="font-size:10px;color:#999;margin-top:2px">Avis totaux</div>
+            </div>
+            <?php if ( $first && $first->id !== $latest->id ) :
+                $gain = (int) $latest->review_count - (int) $first->review_count;
+            ?>
+            <div style="flex:1;background:#f0fdf8;border:1px solid #d1fae5;border-radius:8px;padding:8px 4px">
+                <div style="font-size:20px;font-weight:800;color:#00b894">+<?php echo $gain; ?></div>
+                <div style="font-size:10px;color:#999;margin-top:2px">Depuis début</div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if ( $history ) : ?>
+        <hr style="margin:10px 0">
+        <p style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px">Historique</p>
+        <div style="max-height:180px;overflow-y:auto">
+        <table style="width:100%;font-size:11px;border-collapse:collapse">
+            <tr style="color:#aaa;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff">
+                <th style="text-align:left;padding:3px 0;font-weight:600">Date</th>
+                <th style="text-align:center;padding:3px 0;font-weight:600">⭐</th>
+                <th style="text-align:right;padding:3px 0;font-weight:600">Avis</th>
+                <th style="text-align:right;padding:3px 4px;font-weight:600">Δ</th>
+            </tr>
+            <?php foreach ( $history as $k => $row ) :
+                $next  = $history[ $k + 1 ] ?? null;
+                $delta = $next ? ( (int) $row->review_count - (int) $next->review_count ) : null;
+                $dc    = $delta > 0 ? '#00b894' : ( $delta < 0 ? '#e74c3c' : '#bbb' );
+            ?>
+            <tr style="border-bottom:1px solid #f5f5f5">
+                <td style="padding:4px 0;color:#555"><?php echo esc_html( $row->recorded_at ); ?></td>
+                <td style="text-align:center;padding:4px 0"><?php echo number_format( (float) $row->rating, 1 ); ?></td>
+                <td style="text-align:right;padding:4px 0;font-weight:700"><?php echo (int) $row->review_count; ?></td>
+                <td style="text-align:right;padding:4px 4px;color:<?php echo $dc; ?>">
+                    <?php echo $delta !== null ? ( $delta > 0 ? '+' . $delta : ( $delta === 0 ? '—' : $delta ) ) : '—'; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+        </div>
+        <?php else : ?>
+        <p style="font-size:12px;color:#999;margin:10px 0">Aucune donnée — cliquez sur "Actualiser" pour lancer la première mesure.</p>
+        <?php endif; ?>
+
+        <hr style="margin:10px 0">
+        <button type="button" class="button button-primary button-small" style="width:100%"
+                id="wg-fetch-btn" onclick="wgFetchStats(<?php echo $post->ID; ?>, '<?php echo esc_js( $nonce ); ?>')">
+            🔄 Actualiser maintenant
+        </button>
+        <div id="wg-fetch-msg" style="font-size:11px;margin-top:6px;text-align:center;min-height:16px"></div>
+
+        <script>
+        function wgFetchStats(campaignId, nonce) {
+            var btn = document.getElementById('wg-fetch-btn');
+            var msg = document.getElementById('wg-fetch-msg');
+            var key = document.getElementById('wg-api-key').value.trim();
+            if (!key) { msg.style.color='#e74c3c'; msg.textContent='Renseignez d\'abord la clé API.'; return; }
+            btn.disabled = true;
+            msg.style.color = '#666';
+            msg.textContent = 'Récupération en cours…';
+            fetch(ajaxurl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'wheel_fetch_google_stats', nonce: nonce, campaign_id: campaignId, api_key: key })
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                if (data.success) {
+                    msg.style.color = '#00b894';
+                    msg.textContent = '✓ ' + data.data.rating + ' ⭐ · ' + data.data.review_count + ' avis — rechargement…';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    msg.style.color = '#e74c3c';
+                    msg.textContent = '✗ ' + (data.data || 'Erreur inconnue');
+                }
+            })
+            .catch(() => { btn.disabled = false; msg.style.color='#e74c3c'; msg.textContent='Erreur réseau'; });
+        }
+        </script>
+        <?php
+    }
+
+    /* ── Google Places API : récupérer note + nombre d'avis ─────────────────── */
+
+    public function fetch_google_stats( $place_id, $api_key ) {
+        $url = add_query_arg( [
+            'place_id' => $place_id,
+            'fields'   => 'rating,user_ratings_total',
+            'key'      => $api_key,
+        ], 'https://maps.googleapis.com/maps/api/place/details/json' );
+
+        $response = wp_remote_get( $url, [ 'timeout' => 10 ] );
+        if ( is_wp_error( $response ) ) return null;
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        if ( ( $body['status'] ?? '' ) !== 'OK' ) return null;
+
+        return [
+            'rating'       => round( floatval( $body['result']['rating'] ?? 0 ), 1 ),
+            'review_count' => intval( $body['result']['user_ratings_total'] ?? 0 ),
+        ];
+    }
+
+    /* ── AJAX : actualisation manuelle ──────────────────────────────────────── */
+
+    public function ajax_fetch_google_stats() {
+        check_ajax_referer( 'wheel_google', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+
+        $campaign_id = absint( $_POST['campaign_id'] ?? 0 );
+        $api_key     = sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) );
+
+        if ( ! $campaign_id || ! $api_key ) wp_send_json_error( 'Paramètres manquants' );
+
+        $place_id = get_post_meta( $campaign_id, '_google_place_id', true );
+        if ( ! $place_id ) wp_send_json_error( 'Place ID non configuré — sauvegardez la campagne d\'abord.' );
+
+        $stats = $this->fetch_google_stats( $place_id, $api_key );
+        if ( ! $stats ) wp_send_json_error( 'Impossible de récupérer les données (clé API ou Place ID invalide ?)' );
+
+        global $wpdb;
+        $wpdb->replace( $wpdb->prefix . 'wheel_google_stats', [
+            'campaign_id'  => $campaign_id,
+            'rating'       => $stats['rating'],
+            'review_count' => $stats['review_count'],
+            'recorded_at'  => current_time( 'Y-m-d' ),
+        ] );
+
+        update_option( 'wheel_game_google_api_key', $api_key );
+        wp_send_json_success( $stats );
+    }
+
+    public function ajax_save_google_api_key() {
+        check_ajax_referer( 'wheel_google', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Unauthorized' );
+        update_option( 'wheel_game_google_api_key', sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) ) );
+        wp_send_json_success();
+    }
+
+    /* ── Cron quotidien ─────────────────────────────────────────────────────── */
+
+    public function daily_fetch_google_stats() {
+        $api_key = get_option( 'wheel_game_google_api_key', '' );
+        if ( ! $api_key ) return;
+
+        $ids = get_posts( [
+            'post_type'   => 'wheel_campaign',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'fields'      => 'ids',
+        ] );
+
+        global $wpdb;
+        $gtable = $wpdb->prefix . 'wheel_google_stats';
+        $today  = current_time( 'Y-m-d' );
+
+        foreach ( $ids as $campaign_id ) {
+            $place_id = get_post_meta( $campaign_id, '_google_place_id', true );
+            if ( ! $place_id ) continue;
+
+            $exists = $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$gtable} WHERE campaign_id = %d AND recorded_at = %s",
+                $campaign_id, $today
+            ) );
+            if ( $exists ) continue;
+
+            $stats = $this->fetch_google_stats( $place_id, $api_key );
+            if ( ! $stats ) continue;
+
+            $wpdb->insert( $gtable, [
+                'campaign_id'  => $campaign_id,
+                'rating'       => $stats['rating'],
+                'review_count' => $stats['review_count'],
+                'recorded_at'  => $today,
+            ] );
+        }
     }
 }
 
