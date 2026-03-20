@@ -71,26 +71,28 @@ $js_data = [
 
     body {
       min-height: 100vh;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow-x: hidden;
-      padding: 20px 20px 40px;
+      padding: 20px 16px 40px;
     }
 
     body::before {
       content: '';
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image:
-        radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 50% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.5) 0%, transparent 100%);
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,215,0,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0,200,81,0.06) 0%, transparent 50%),
+        radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 75% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 65%, rgba(255,255,255,0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 75%, rgba(255,255,255,0.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4) 0%, transparent 100%);
       pointer-events: none;
       z-index: 0;
     }
@@ -98,9 +100,24 @@ $js_data = [
     .container {
       position: relative;
       z-index: 1;
-      text-align: center;
-      max-width: 480px;
+      max-width: 460px;
       width: 100%;
+    }
+
+    .wheel-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255,215,0,0.4);
+      border-radius: 24px;
+      padding: 24px 20px 20px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+      animation: card-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes card-in {
+      from { opacity: 0; transform: scale(0.92) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .gift-icon {
@@ -304,7 +321,8 @@ $js_data = [
       color: #ffb347;
       letter-spacing: 0.8px;
       text-transform: uppercase;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+      text-align: center;
     }
 
     .test-badge::before {
@@ -389,42 +407,44 @@ $js_data = [
 
 <div class="container">
   <?php if ( $is_admin_test ) : ?>
-  <div class="test-badge">Mode test admin</div>
+  <div style="text-align:center"><div class="test-badge">Mode test admin</div></div>
   <?php endif; ?>
 
-  <div class="header">
-    <span class="gift-icon">🎁</span>
-    <h1><?php echo esc_html( $w_title ); ?></h1>
-    <p class="subtitle"><?php echo esc_html( $w_sub ); ?></p>
-  </div>
+  <div class="wheel-card">
+    <div class="header">
+      <span class="gift-icon">🎁</span>
+      <h1><?php echo esc_html( $w_title ); ?></h1>
+      <p class="subtitle"><?php echo esc_html( $w_sub ); ?></p>
+    </div>
 
-  <div class="wheel-wrapper">
-    <div class="arrow"></div>
-    <canvas id="wheel" width="320" height="320"></canvas>
-    <button class="spin-btn" id="spinBtn" onclick="spin()">TOURNER</button>
-  </div>
+    <div class="wheel-wrapper">
+      <div class="arrow"></div>
+      <canvas id="wheel" width="320" height="320"></canvas>
+      <button class="spin-btn" id="spinBtn" onclick="spin()">TOURNER</button>
+    </div>
 
-  <div class="result-banner" id="resultBanner">
-    <div class="label">Vous avez gagné</div>
-    <div class="prize-name" id="prizeLabel"></div>
-  </div>
+    <div class="result-banner" id="resultBanner">
+      <div class="label">Vous avez gagné</div>
+      <div class="prize-name" id="prizeLabel"></div>
+    </div>
 
-  <button class="claim-btn" id="claimBtn">🎉 Récupérer mon cadeau</button>
-  <button class="replay-btn" id="replayBtn" onclick="resetForTest()">🔄 Rejouer (test)</button>
+    <button class="claim-btn" id="claimBtn">🎉 Récupérer mon cadeau</button>
+    <button class="replay-btn" id="replayBtn" onclick="resetForTest()">🔄 Rejouer (test)</button>
 
-  <?php if ( $already_played && ! $is_admin_test ) : ?>
-  <p class="already-played-msg">Vous avez déjà participé à ce tirage.</p>
-  <?php endif; ?>
+    <?php if ( $already_played && ! $is_admin_test ) : ?>
+    <p class="already-played-msg">Vous avez déjà participé à ce tirage.</p>
+    <?php endif; ?>
 
-  <?php if ( $is_admin_test ) : ?>
-  <div class="test-stats" id="testStats">
-    <h4>📊 Statistiques de cette session de test</h4>
-    <div id="statsRows"></div>
-    <div class="total-line" id="statsTotal">0 tirage(s)</div>
-  </div>
-  <?php endif; ?>
+    <?php if ( $is_admin_test ) : ?>
+    <div class="test-stats" id="testStats">
+      <h4>📊 Statistiques de cette session de test</h4>
+      <div id="statsRows"></div>
+      <div class="total-line" id="statsTotal">0 tirage(s)</div>
+    </div>
+    <?php endif; ?>
 
-  <p class="footer-note"><?php echo esc_html( $w_foot ); ?></p>
+    <p class="footer-note"><?php echo esc_html( $w_foot ); ?></p>
+  </div><!-- /.wheel-card -->
 </div>
 
 <script>

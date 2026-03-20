@@ -61,7 +61,12 @@ $blog_name  = get_bloginfo( 'name' );
       inset: 0;
       background:
         radial-gradient(circle at 20% 20%, rgba(255,215,0,0.08) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(0,200,81,0.08) 0%, transparent 50%);
+        radial-gradient(circle at 80% 80%, rgba(0,200,81,0.06) 0%, transparent 50%),
+        radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 75% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 65%, rgba(255,255,255,0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 75%, rgba(255,255,255,0.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4) 0%, transparent 100%);
       pointer-events: none;
     }
 
@@ -288,6 +293,40 @@ $blog_name  = get_bloginfo( 'name' );
       font-size: 0.7rem;
       margin-top: 20px;
       line-height: 1.6;
+    }
+
+    /* ── Responsive mobile (évite le scroll) ── */
+    @media (max-height: 780px) {
+      body { padding: 14px 12px; }
+      .prize-card { padding: 20px 16px; }
+      .brand-logo { width: 52px; height: 52px; margin-bottom: 8px; }
+      .congrats { font-size: 0.75rem; margin-bottom: 3px; }
+      h1 { font-size: 1.4rem; margin-bottom: 12px; }
+      .prize-badge { padding: 10px 22px; font-size: 1.1rem; margin-bottom: 12px; }
+      .validity { margin-bottom: 2px; font-size: 0.75rem; }
+      .separator { margin: 14px 0 10px; }
+      .review-title { font-size: 1.05rem; margin-bottom: 5px; }
+      .review-subtitle { font-size: 0.82rem; margin-bottom: 10px; line-height: 1.4; }
+      .stars { font-size: 1.6rem; margin-bottom: 10px; letter-spacing: 2px; }
+      .steps { margin: 8px 0 12px; gap: 6px; }
+      .step-num { width: 22px; height: 22px; font-size: 0.72rem; }
+      .step-text { font-size: 0.82rem; padding-top: 2px; }
+      .google-btn { padding: 13px 16px; }
+      .google-logo { width: 22px; height: 22px; }
+      .urgency-note { margin-top: 10px; padding: 8px 12px; font-size: 0.78rem; }
+      .footer-note { margin-top: 12px; font-size: 0.65rem; }
+    }
+
+    @media (max-height: 650px) {
+      body { padding: 8px 10px; }
+      .prize-card { padding: 16px 14px; }
+      h1 { font-size: 1.25rem; margin-bottom: 8px; }
+      .prize-badge { padding: 8px 18px; font-size: 1rem; margin-bottom: 10px; }
+      .separator { margin: 10px 0 8px; }
+      .review-subtitle { display: none; }
+      .stars { margin-bottom: 8px; }
+      .steps { margin: 6px 0 10px; gap: 5px; }
+      .footer-note { display: none; }
     }
   </style>
 </head>
