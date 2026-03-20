@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wheel Game — Roue des cadeaux
  * Description: Hébergez des jeux de roue personnalisés pour vos clients. Chaque campagne a sa propre URL, ses propres prix et son propre suivi des participations.
- * Version:     1.4.1
+ * Version:     1.4.2
  * Author:      Votre Nom
  * License:     GPL v2 or later
  * Text Domain: wheel-game
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'WHEEL_GAME_VERSION', '1.4.1' );
+define( 'WHEEL_GAME_VERSION', '1.4.2' );
 define( 'WHEEL_GAME_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WHEEL_GAME_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -599,12 +599,12 @@ class Wheel_Game {
             'ip_hash'     => hash( 'sha256', ( $_SERVER['REMOTE_ADDR'] ?? '' ) . NONCE_SALT ),
         ] );
 
-        // Cookie serveur (httpOnly, 30 jours) — plus sécurisé que localStorage
+        // Cookie serveur (httpOnly, 30 jours) — chemin '/' pour couvrir tout le domaine
         setcookie(
             $cookie_key,
             base64_encode( wp_json_encode( [ 'index' => $prize_index, 'label' => $prize_label ] ) ),
             time() + ( 30 * DAY_IN_SECONDS ),
-            COOKIEPATH,
+            '/',
             COOKIE_DOMAIN,
             is_ssl(),
             true   // httpOnly

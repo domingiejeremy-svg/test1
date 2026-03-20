@@ -11,10 +11,8 @@ $campaign_id = get_the_ID();
 $prize = sanitize_text_field( wp_unslash( $_GET['prize'] ?? '🎁 Cadeau surprise' ) );
 
 // Vérifier que le joueur a bien une participation enregistrée
-// Fallback : si le cookie n'est pas encore reçu mais que le paramètre prize
-// est présent (navigation directe depuis le bouton claim), on laisse passer.
 $cookie_key = 'wheel_played_' . $campaign_id;
-if ( ! isset( $_COOKIE[ $cookie_key ] ) && ! isset( $_GET['prize'] ) ) {
+if ( ! isset( $_COOKIE[ $cookie_key ] ) ) {
     wp_redirect( get_permalink( $campaign_id ) );
     exit;
 }
