@@ -313,9 +313,10 @@ const WHEEL_DATA = <?php echo wp_json_encode( $js_data ); ?>;
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const PRIZES = WHEEL_DATA.prizes.map( p => ({
-    label: p.line2 ? `${p.line1}\n${p.line2}` : p.line1,
-    color: p.color || '#6c5ce7',
-    emoji: p.emoji || '🎁',
+    label:  p.line2 ? `${p.line1}\n${p.line2}` : p.line1,
+    color:  p.color  || '#6c5ce7',
+    emoji:  p.emoji  || '🎁',
+    weight: p.weight || 10,
 }));
 
 // ── Canvas ───────────────────────────────────────────────────────────────────
@@ -383,11 +384,6 @@ function drawWheel(angle) {
     ctx.restore();
 }
 
-function getWinnerFromAngle(angle) {
-    const a = ((-Math.PI / 2 - angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-    return Math.floor(a / arc) % N;
-}
-
 drawWheel(currentAngle);
 
 // ── Déjà joué : restituer l'état ────────────────────────────────────────────
@@ -398,17 +394,41 @@ if (WHEEL_DATA.alreadyPlayed && WHEEL_DATA.playedData) {
     showResult(false);
 }
 
+// ── Tirage pondéré ────────────────────────────────────────────────────────────
+// Le gagnant est choisi AVANT l'animation selon les poids définis dans l'admin.
+// Exemple : poids 50 = 5× plus probable que poids 10.
+function weightedRandom() {
+    const total = PRIZES.reduce((sum, p) => sum + p.weight, 0);
+    let rand = Math.random() * total;
+    for (let i = 0; i < PRIZES.length; i++) {
+        rand -= PRIZES[i].weight;
+        if (rand <= 0) return i;
+    }
+    return PRIZES.length - 1;
+}
+
 // ── Spin ─────────────────────────────────────────────────────────────────────
 function spin() {
     if (isSpinning) return;
     isSpinning = true;
     document.getElementById('spinBtn').disabled = true;
 
-    const totalRotation = (5 + Math.random() * 3) * 2 * Math.PI + Math.random() * 2 * Math.PI;
-    const finalAngle    = currentAngle + totalRotation;
-    const duration      = 4500 + Math.random() * 1000;
-    const startTime     = performance.now();
-    const startAngle    = currentAngle;
+    // 1. Choisir le gagnant AVANT l'animation (tirage pondéré)
+    wonIndex = weightedRandom();
+
+    // 2. Calculer l'angle final pour que le segment gagnant arrive en haut
+    //    (sous la flèche, à -PI/2 dans les coordonnées canvas)
+    const segCenter   = wonIndex * arc + arc / 2;
+    const randOffset  = (Math.random() - 0.5) * arc * 0.7; // position aléatoire dans le segment
+    const baseFinal   = -Math.PI / 2 - segCenter + randOffset;
+    const minFinal    = currentAngle + 5 * 2 * Math.PI;     // au moins 5 tours complets
+    const k           = Math.ceil((minFinal - baseFinal) / (2 * Math.PI));
+    const finalAngle  = baseFinal + k * 2 * Math.PI;
+
+    // 3. Animer
+    const duration  = 4500 + Math.random() * 1000;
+    const startTime = performance.now();
+    const startAngle = currentAngle;
 
     function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
 
@@ -422,7 +442,6 @@ function spin() {
             currentAngle = finalAngle;
             drawWheel(currentAngle);
             isSpinning   = false;
-            wonIndex     = getWinnerFromAngle(finalAngle);
             savePlay(wonIndex);
         }
     }
