@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wheel Game — Roue des cadeaux
  * Description: Hébergez des jeux de roue personnalisés pour vos clients. Chaque campagne a sa propre URL, ses propres prix et son propre suivi des participations.
- * Version:     1.2.0
+ * Version:     1.3.0
  * Author:      Votre Nom
  * License:     GPL v2 or later
  * Text Domain: wheel-game
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'WHEEL_GAME_VERSION', '1.2.0' );
+define( 'WHEEL_GAME_VERSION', '1.3.0' );
 define( 'WHEEL_GAME_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WHEEL_GAME_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -122,6 +122,7 @@ class Wheel_Game {
         global $post;
         if ( ( $hook === 'post-new.php' || $hook === 'post.php' )
             && isset( $post ) && $post->post_type === 'wheel_campaign' ) {
+            wp_enqueue_media();
             wp_enqueue_script(
                 'wheel-admin',
                 WHEEL_GAME_URL . 'assets/admin.js',
@@ -213,6 +214,7 @@ class Wheel_Game {
         $w_foot  = get_post_meta( $post->ID, '_wheel_footer',   true ) ?: '1 participation par client · Offre non cumulable';
 
         // Textes récompense
+        $r_logo  = get_post_meta( $post->ID, '_reward_logo',            true ) ?: '';
         $g_url   = get_post_meta( $post->ID, '_reward_google_url',      true );
         $r_valid = get_post_meta( $post->ID, '_reward_validity',        true ) ?: 'Valable lors de votre prochaine visite · Présentez cette page';
         $r_rtit  = get_post_meta( $post->ID, '_reward_review_title',    true ) ?: 'Laissez-nous un avis Google ⭐';
@@ -338,6 +340,24 @@ class Wheel_Game {
             <!-- Récompense — textes -->
             <div class="wg-section">
                 <h3>🏆 Page Récompense — Textes</h3>
+
+                <div class="wg-field">
+                    <label>Logo de l'entreprise</label>
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+                        <img id="reward-logo-preview"
+                             src="<?php echo esc_url( $r_logo ); ?>"
+                             alt=""
+                             style="<?php echo $r_logo ? '' : 'display:none;'; ?>width:72px;height:72px;object-fit:contain;border:2px solid #e0e4ea;border-radius:8px;background:#f8f9fb">
+                        <div style="display:flex;flex-direction:column;gap:6px">
+                            <button type="button" id="reward-logo-btn" class="button">Choisir un logo</button>
+                            <button type="button" id="reward-logo-remove" class="button"
+                                    style="<?php echo $r_logo ? '' : 'display:none;'; ?>color:#e74c3c">Supprimer le logo</button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="reward_logo" id="reward-logo-input" value="<?php echo esc_attr( $r_logo ); ?>">
+                    <p class="wg-hint">Affiché en haut de la page récompense. Recommandé : PNG carré transparent, 200×200 px minimum.</p>
+                </div>
+
                 <div class="wg-grid2">
                     <div class="wg-field">
                         <label>Validité du cadeau</label>
@@ -388,6 +408,35 @@ class Wheel_Game {
             </div>
 
         </div>
+        <script>
+        (function() {
+            var frame;
+            var btn     = document.getElementById('reward-logo-btn');
+            var remove  = document.getElementById('reward-logo-remove');
+            var input   = document.getElementById('reward-logo-input');
+            var preview = document.getElementById('reward-logo-preview');
+            if (!btn) return;
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (frame) { frame.open(); return; }
+                frame = wp.media({ title: 'Choisir le logo', button: { text: 'Utiliser ce logo' }, multiple: false, library: { type: 'image' } });
+                frame.on('select', function() {
+                    var att = frame.state().get('selection').first().toJSON();
+                    input.value         = att.url;
+                    preview.src         = att.url;
+                    preview.style.display = '';
+                    remove.style.display  = '';
+                });
+                frame.open();
+            });
+            remove.addEventListener('click', function() {
+                input.value           = '';
+                preview.src           = '';
+                preview.style.display = 'none';
+                remove.style.display  = 'none';
+            });
+        })();
+        </script>
         <?php
     }
 
@@ -492,6 +541,11 @@ class Wheel_Game {
             if ( isset( $_POST[ $post_key ] ) ) {
                 update_post_meta( $post_id, $meta_key, sanitize_textarea_field( wp_unslash( $_POST[ $post_key ] ) ) );
             }
+        }
+
+        // Logo (URL)
+        if ( isset( $_POST['reward_logo'] ) ) {
+            update_post_meta( $post_id, '_reward_logo', esc_url_raw( wp_unslash( $_POST['reward_logo'] ) ) );
         }
 
         // Prizes (JSON)

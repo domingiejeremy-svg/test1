@@ -77,8 +77,8 @@ $js_data = [
       align-items: center;
       justify-content: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      overflow: hidden;
-      padding: 20px;
+      overflow-x: hidden;
+      padding: 20px 20px 40px;
     }
 
     body::before {
@@ -170,6 +170,16 @@ $js_data = [
         0 0 0 12px rgba(255,215,0,0.15),
         0 20px 60px rgba(0,0,0,0.5);
       display: block;
+      max-width: min(320px, calc(100vw - 50px));
+      max-height: min(320px, calc(100vw - 50px));
+    }
+
+    @media (max-height: 680px) {
+      .gift-icon { font-size: 32px; margin-bottom: 4px; }
+      h1 { font-size: 1.5rem; }
+      .subtitle { font-size: 0.88rem; margin-top: 4px; }
+      .wheel-wrapper { margin: 8px auto; }
+      .claim-btn { padding: 12px 32px; font-size: 1rem; margin-top: 12px; }
     }
 
     .spin-btn {

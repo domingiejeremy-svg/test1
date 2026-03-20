@@ -19,6 +19,7 @@ if ( ! isset( $_COOKIE[ $cookie_key ] ) ) {
 }
 
 // Récupérer la config
+$r_logo     = get_post_meta( $campaign_id, '_reward_logo',            true ) ?: '';
 $google_url = get_post_meta( $campaign_id, '_reward_google_url',      true ) ?: '#';
 $r_valid    = get_post_meta( $campaign_id, '_reward_validity',        true ) ?: 'Valable lors de votre prochaine visite · Présentez cette page';
 $r_rtit     = get_post_meta( $campaign_id, '_reward_review_title',    true ) ?: 'Laissez-nous un avis Google ⭐';
@@ -87,16 +88,18 @@ $blog_name  = get_bloginfo( 'name' );
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    .trophy {
-      font-size: 64px;
-      animation: trophy-bounce 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    .brand-logo {
       display: block;
-      margin-bottom: 12px;
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin: 0 auto 12px;
+      animation: logo-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
-    @keyframes trophy-bounce {
-      from { transform: scale(0) rotate(-20deg); opacity: 0; }
-      to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+    @keyframes logo-in {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
     }
 
     .congrats {
@@ -293,7 +296,9 @@ $blog_name  = get_bloginfo( 'name' );
 <div class="container">
   <div class="prize-card">
 
-    <span class="trophy">🏆</span>
+    <?php if ( $r_logo ) : ?>
+    <img src="<?php echo esc_url( $r_logo ); ?>" class="brand-logo" alt="">
+    <?php endif; ?>
     <p class="congrats">Félicitations !</p>
     <h1>Vous avez gagné</h1>
     <div class="prize-badge"><?php echo esc_html( $prize ); ?></div>
