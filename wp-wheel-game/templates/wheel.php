@@ -45,6 +45,9 @@ $w_title = get_post_meta( $campaign_id, '_wheel_title',    true ) ?: 'Tentez vot
 $w_sub   = get_post_meta( $campaign_id, '_wheel_subtitle', true ) ?: 'Tournez la roue et gagnez un cadeau exclusif';
 $w_foot  = get_post_meta( $campaign_id, '_wheel_footer',   true ) ?: '1 participation par client · Offre non cumulable';
 
+// Mode test : admin connecté → roue illimitée, aucune donnée sauvegardée
+$is_admin_test = is_user_logged_in() && current_user_can( 'manage_options' );
+
 // Données passées au JS
 $js_data = [
     'campaignId'    => $campaign_id,
@@ -52,8 +55,9 @@ $js_data = [
     'nonce'         => wp_create_nonce( 'wheel_play' ),
     'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
     'rewardUrl'     => get_permalink( $campaign_id ) . '?step=reward',
-    'alreadyPlayed' => $already_played,
+    'alreadyPlayed' => $already_played && ! $is_admin_test,
     'playedData'    => $played_data,
+    'isAdminTest'   => $is_admin_test,
 ];
 ?>
 <!DOCTYPE html>
@@ -275,6 +279,98 @@ $js_data = [
       font-size: 0.72rem;
       margin-top: 20px;
     }
+
+    /* ── Mode test admin ── */
+    .test-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 165, 0, 0.18);
+      border: 1.5px solid rgba(255, 165, 0, 0.7);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #ffb347;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .test-badge::before {
+      content: '';
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ffb347;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .replay-btn {
+      display: none;
+      margin: 14px auto 0;
+      padding: 12px 32px;
+      background: rgba(255, 165, 0, 0.2);
+      color: #ffb347;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: 2px solid rgba(255, 165, 0, 0.6);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .replay-btn:hover { background: rgba(255, 165, 0, 0.35); }
+
+    .test-stats {
+      display: none;
+      margin-top: 18px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 14px 16px;
+      text-align: left;
+      width: 100%;
+    }
+
+    .test-stats h4 {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #ffb347;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .test-stats .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .test-stats .stat-bar-wrap {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .test-stats .stat-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .test-stats .stat-label { font-size: 0.78rem; color: rgba(255,255,255,0.75); min-width: 100px; }
+    .test-stats .stat-count { font-size: 0.78rem; font-weight: 700; color: #fff; min-width: 28px; text-align: right; }
+    .test-stats .stat-pct   { font-size: 0.72rem; color: rgba(255,255,255,0.5); min-width: 38px; text-align: right; }
+    .test-stats .total-line { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); }
   </style>
 </head>
 <body>
@@ -282,6 +378,10 @@ $js_data = [
 <div class="confetti-container" id="confettiContainer"></div>
 
 <div class="container">
+  <?php if ( $is_admin_test ) : ?>
+  <div class="test-badge">Mode test admin</div>
+  <?php endif; ?>
+
   <div class="header">
     <span class="gift-icon">🎁</span>
     <h1><?php echo esc_html( $w_title ); ?></h1>
@@ -300,9 +400,18 @@ $js_data = [
   </div>
 
   <button class="claim-btn" id="claimBtn">🎉 Récupérer mon cadeau</button>
+  <button class="replay-btn" id="replayBtn" onclick="resetForTest()">🔄 Rejouer (test)</button>
 
-  <?php if ( $already_played ) : ?>
+  <?php if ( $already_played && ! $is_admin_test ) : ?>
   <p class="already-played-msg">Vous avez déjà participé à ce tirage.</p>
+  <?php endif; ?>
+
+  <?php if ( $is_admin_test ) : ?>
+  <div class="test-stats" id="testStats">
+    <h4>📊 Statistiques de cette session de test</h4>
+    <div id="statsRows"></div>
+    <div class="total-line" id="statsTotal">0 tirage(s)</div>
+  </div>
   <?php endif; ?>
 
   <p class="footer-note"><?php echo esc_html( $w_foot ); ?></p>
@@ -386,7 +495,10 @@ function drawWheel(angle) {
 
 drawWheel(currentAngle);
 
-// ── Déjà joué : restituer l'état ────────────────────────────────────────────
+// ── Compteurs de test ─────────────────────────────────────────────────────────
+const testCounts = new Array(PRIZES.length).fill(0);
+
+// ── Déjà joué : restituer l'état (ignoré en mode test admin) ─────────────────
 if (WHEEL_DATA.alreadyPlayed && WHEEL_DATA.playedData) {
     document.getElementById('spinBtn').disabled    = true;
     document.getElementById('spinBtn').textContent = 'JOUÉ ✓';
@@ -454,6 +566,13 @@ function savePlay(index) {
     const prize      = PRIZES[index];
     const prizeLabel = prize.emoji + ' ' + prize.label.replace('\n', ' ');
 
+    // Mode test : ne pas sauvegarder en DB, ne pas bloquer avec un cookie
+    if (WHEEL_DATA.isAdminTest) {
+        testCounts[index]++;
+        showResult(true);
+        return;
+    }
+
     fetch(WHEEL_DATA.ajaxUrl, {
         method:  'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -467,7 +586,7 @@ function savePlay(index) {
     })
     .then(r => r.json())
     .then(() => showResult(true))
-    .catch(() => showResult(true)); // Afficher quand même en cas d'erreur réseau
+    .catch(() => showResult(true));
 }
 
 // ── Résultat ──────────────────────────────────────────────────────────────────
@@ -478,14 +597,59 @@ function showResult(withConfetti) {
     document.getElementById('prizeLabel').textContent = prizeText;
     document.getElementById('resultBanner').style.display = 'block';
 
-    const claimBtn = document.getElementById('claimBtn');
-    claimBtn.style.display = 'block';
-    claimBtn.onclick = () => {
-        window.location.href = WHEEL_DATA.rewardUrl
-            + '&prize=' + encodeURIComponent(prizeText);
-    };
+    if (WHEEL_DATA.isAdminTest) {
+        // Mode test : bouton rejouer + stats
+        document.getElementById('replayBtn').style.display = 'block';
+        document.getElementById('claimBtn').style.display  = 'none';
+        updateTestStats();
+    } else {
+        const claimBtn = document.getElementById('claimBtn');
+        claimBtn.style.display = 'block';
+        claimBtn.onclick = () => {
+            window.location.href = WHEEL_DATA.rewardUrl
+                + '&prize=' + encodeURIComponent(prizeText);
+        };
+    }
 
     if (withConfetti) launchConfetti();
+}
+
+// ── Rejouer (mode test) ───────────────────────────────────────────────────────
+function resetForTest() {
+    document.getElementById('spinBtn').disabled    = false;
+    document.getElementById('spinBtn').textContent = 'TOURNER';
+    document.getElementById('resultBanner').style.display = 'none';
+    document.getElementById('replayBtn').style.display    = 'none';
+    wonIndex = null;
+}
+
+// ── Stats de test ─────────────────────────────────────────────────────────────
+function updateTestStats() {
+    const statsEl = document.getElementById('testStats');
+    if (!statsEl) return;
+    statsEl.style.display = 'block';
+
+    const total  = testCounts.reduce((a, b) => a + b, 0);
+    const maxCount = Math.max(...testCounts, 1);
+
+    document.getElementById('statsRows').innerHTML = PRIZES.map((p, i) => {
+        const count     = testCounts[i];
+        const pct       = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
+        const barWidth  = (count / maxCount * 100).toFixed(1);
+        const label     = p.emoji + ' ' + p.label.replace('\n', ' ');
+        const wPct      = (p.weight / PRIZES.reduce((s, x) => s + x.weight, 0) * 100).toFixed(1);
+        return `<div class="stat-row">
+            <span class="stat-label" title="Poids théorique: ${wPct}%">${label}</span>
+            <div class="stat-bar-wrap">
+                <div class="stat-bar" style="width:${barWidth}%;background:${p.color}"></div>
+            </div>
+            <span class="stat-count">${count}</span>
+            <span class="stat-pct">${pct}%</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('statsTotal').textContent =
+        `${total} tirage(s) · Survolez un prix pour voir le % théorique`;
 }
 
 // ── Confettis ─────────────────────────────────────────────────────────────────
