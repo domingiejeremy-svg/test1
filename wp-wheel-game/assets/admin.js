@@ -58,7 +58,8 @@
         pct.step        = 0.01;
         pct.placeholder = '%';
         pct.addEventListener('input', () => {
-            prizes[i].percent = Math.max(0, parseFloat(pct.value) || 0);
+            const v = pct.value.trim();
+            prizes[i].percent = v === '' ? 0 : Math.max(0, parseFloat(v));
             syncJson();
             updatePercentBar();
         });

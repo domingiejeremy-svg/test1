@@ -511,13 +511,15 @@ if (WHEEL_DATA.alreadyPlayed && WHEEL_DATA.playedData) {
 // Exemple : 60% pour un café, 0.01% pour un gros lot.
 // Les % n'ont pas besoin de totaliser exactement 100 : le tirage est proportionnel.
 function weightedRandom() {
-    const total = PRIZES.reduce((sum, p) => sum + p.percent, 0);
+    const eligible = PRIZES.map((p, i) => ({ i, w: p.percent })).filter(x => x.w > 0);
+    if (eligible.length === 0) return 0;
+    const total = eligible.reduce((sum, x) => sum + x.w, 0);
     let rand = Math.random() * total;
-    for (let i = 0; i < PRIZES.length; i++) {
-        rand -= PRIZES[i].percent;
+    for (const { i, w } of eligible) {
+        rand -= w;
         if (rand <= 0) return i;
     }
-    return PRIZES.length - 1;
+    return eligible[eligible.length - 1].i;
 }
 
 // ── Spin ─────────────────────────────────────────────────────────────────────
