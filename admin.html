@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Roue des cadeaux</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── Login ── */
+    #loginOverlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .login-box {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .login-box .icon { font-size: 48px; margin-bottom: 16px; display: block; }
+    .login-box h2    { font-size: 1.4rem; margin-bottom: 6px; }
+    .login-box p     { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+
+    .login-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: #6c5ce7; }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .login-btn:hover { opacity: 0.9; }
+
+    .login-error {
+      color: #e74c3c;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* ── Top nav ── */
+    .topnav {
+      background: white;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .topnav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .topnav-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn:hover  { opacity: 0.85; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary { background: #6c5ce7; color: white; }
+    .btn-success { background: #00b894; color: white; }
+    .btn-danger  { background: #e74c3c; color: white; }
+    .btn-ghost   { background: #eef0f3; color: #333; }
+    .btn-sm      { padding: 7px 13px; font-size: 0.82rem; }
+
+    /* ── Content ── */
+    .content {
+      max-width: 860px;
+      margin: 28px auto;
+      padding: 0 20px 100px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 26px 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid #f0f2f5;
+    }
+
+    /* ── Form fields ── */
+    .field-group { margin-bottom: 16px; }
+    .field-group:last-child { margin-bottom: 0; }
+
+    .field-label {
+      font-size: 0.79rem;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .field-input,
+    .field-textarea {
+      width: 100%;
+      padding: 11px 13px;
+      border: 2px solid #e8ecf0;
+      border-radius: 9px;
+      font-size: 0.93rem;
+      font-family: inherit;
+      color: #1a1a2e;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fafbfc;
+    }
+    .field-input:focus,
+    .field-textarea:focus  { border-color: #6c5ce7; background: white; }
+    .field-textarea        { resize: vertical; min-height: 68px; }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .hint a { color: #6c5ce7; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 580px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── Warning / info box ── */
+    .info-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-size: 0.84rem;
+      color: #856404;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    /* ── Prize rows ── */
+    .prizes-header {
+      display: grid;
+      grid-template-columns: 52px 1fr 1fr 46px 34px;
+      gap: 8px;
+      padding: 0 8px;
+      margin-bottom: 6px;
+    }
+
+    .prizes-header span {
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .prizes-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .prize-row {
+      display: grid;
+      grid-template-columns: 52px 1fr 1fr 46px 34px;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 8px;
+      background: #fafbfc;
+      border: 2px solid #e8ecf0;
+      border-radius: 10px;
+      transition: border-color 0.2s;
+    }
+    .prize-row:hover { border-color: #d0d7e0; }
+
+    .prize-emoji-input {
+      width: 100%;
+      font-size: 1.3rem;
+      text-align: center;
+      padding: 5px 2px;
+      border: 2px solid #e8ecf0;
+      border-radius: 8px;
+      background: white;
+      font-family: inherit;
+    }
+    .prize-emoji-input:focus { border-color: #6c5ce7; outline: none; }
+
+    .prize-text-input {
+      width: 100%;
+      padding: 7px 9px;
+      border: 2px solid #e8ecf0;
+      border-radius: 8px;
+      font-size: 0.87rem;
+      background: white;
+      font-family: inherit;
+    }
+    .prize-text-input:focus { border-color: #6c5ce7; outline: none; }
+
+    .prize-color-input {
+      width: 46px;
+      height: 36px;
+      padding: 2px;
+      border: 2px solid #e8ecf0;
+      border-radius: 8px;
+      cursor: pointer;
+      background: white;
+    }
+
+    .prize-delete-btn {
+      width: 34px;
+      height: 34px;
+      border: none;
+      background: #fff0f0;
+      color: #e74c3c;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .prize-delete-btn:hover { background: #ffe0e0; }
+
+    .add-prize-btn {
+      margin-top: 10px;
+      padding: 9px 14px;
+      background: #f4f6f9;
+      color: #555;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s, border-color 0.2s;
+      font-family: inherit;
+    }
+    .add-prize-btn:hover { background: #e8ecf0; border-color: #aaa; }
+
+    /* ── Password section ── */
+    .password-row { display: flex; gap: 12px; align-items: flex-end; }
+    .password-row .field-group { flex: 1; margin: 0; }
+
+    /* ── Save bar ── */
+    .save-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      z-index: 50;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      top: 74px;
+      right: 20px;
+      background: #2d3436;
+      color: white;
+      padding: 13px 20px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      z-index: 200;
+      opacity: 0;
+      transform: translateX(16px);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+    }
+    .toast.show    { opacity: 1; transform: translateX(0); }
+    .toast.success { background: #00b894; }
+    .toast.error   { background: #e74c3c; }
+  </style>
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <span class="icon">🔐</span>
+    <h2>Accès administration</h2>
+    <p>Entrez votre mot de passe pour configurer la roue</p>
+    <input type="password" class="login-input" id="loginInput" placeholder="Mot de passe">
+    <button class="login-btn" onclick="doLogin()">Se connecter</button>
+    <p class="login-error" id="loginError">Mot de passe incorrect</p>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Top navigation -->
+<nav class="topnav">
+  <div class="topnav-brand">🎡 Admin — Roue des cadeaux</div>
+  <div class="topnav-actions">
+    <a href="wheel.html" class="btn btn-ghost btn-sm" target="_blank">👀 Voir la roue</a>
+    <a href="reward.html?prize=☕%20Café%20offert" class="btn btn-ghost btn-sm" target="_blank">👀 Voir la récompense</a>
+    <button class="btn btn-danger btn-sm" onclick="doLogout()">Déconnexion</button>
+  </div>
+</nav>
+
+<!-- Main content -->
+<div class="content" id="adminContent" style="display:none">
+
+  <!-- Entreprise -->
+  <div class="card">
+    <div class="card-title">🏢 Informations entreprise</div>
+    <div class="info-box">
+      ⚠️ Le lien Google Reviews est l'élément le plus important de cette configuration. Sans lui, les clients ne pourront pas laisser d'avis.
+    </div>
+    <div class="field-group">
+      <label class="field-label">Lien Google Reviews</label>
+      <input type="url" class="field-input" id="googleUrl" placeholder="https://search.google.com/local/writereview?placeid=...">
+      <p class="hint">Pour trouver votre Place ID : allez sur <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank">Google Place ID Finder</a>, cherchez votre établissement, copiez l'ID.</p>
+    </div>
+  </div>
+
+  <!-- Roue — textes -->
+  <div class="card">
+    <div class="card-title">🎡 Page Roue — Textes</div>
+    <div class="grid-2">
+      <div class="field-group">
+        <label class="field-label">Titre principal</label>
+        <input type="text" class="field-input" id="wheelTitle" placeholder="Tentez votre chance !">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Sous-titre</label>
+        <input type="text" class="field-input" id="wheelSubtitle" placeholder="Tournez la roue et gagnez un cadeau exclusif">
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Note de bas de page</label>
+      <input type="text" class="field-input" id="wheelFooter" placeholder="1 participation par client · Offre non cumulable">
+    </div>
+  </div>
+
+  <!-- Prix -->
+  <div class="card">
+    <div class="card-title">🎁 Prix de la roue</div>
+    <div class="prizes-header">
+      <span>Emoji</span>
+      <span>Ligne 1</span>
+      <span>Ligne 2</span>
+      <span>Couleur</span>
+      <span></span>
+    </div>
+    <div class="prizes-list" id="prizesList"></div>
+    <button class="add-prize-btn" onclick="addPrize()">+ Ajouter un prix</button>
+    <p class="hint" style="margin-top: 8px">Recommandé : 6 à 8 prix pour une bonne lisibilité sur la roue.</p>
+  </div>
+
+  <!-- Page récompense -->
+  <div class="card">
+    <div class="card-title">🏆 Page Récompense — Textes</div>
+    <div class="grid-2">
+      <div class="field-group">
+        <label class="field-label">Validité du cadeau</label>
+        <input type="text" class="field-input" id="rewardValidity" placeholder="Valable lors de votre prochaine visite · Présentez cette page">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Titre section avis</label>
+        <input type="text" class="field-input" id="reviewTitle" placeholder="Laissez-nous un avis Google ⭐">
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Texte d'incitation (sous le titre)</label>
+      <textarea class="field-textarea" id="reviewSubtitle" placeholder="Votre avis nous aide énormément..."></textarea>
+      <p class="hint">Retour à la ligne = nouvelle ligne affichée.</p>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Étape 1</label>
+      <input type="text" class="field-input" id="step1" placeholder="Cliquez sur le bouton ci-dessous">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Étape 2</label>
+      <input type="text" class="field-input" id="step2" placeholder="Donnez-nous 5 étoiles et laissez un petit commentaire">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Étape 3</label>
+      <input type="text" class="field-input" id="step3" placeholder="Revenez récupérer votre cadeau en montrant cette page !">
+    </div>
+    <div class="grid-2">
+      <div class="field-group">
+        <label class="field-label">Bouton — texte principal</label>
+        <input type="text" class="field-input" id="btnMain" placeholder="Laisser un avis Google">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Bouton — sous-texte</label>
+        <input type="text" class="field-input" id="btnSub" placeholder="Ouvre la page Google de notre établissement">
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Message d'urgence</label>
+      <input type="text" class="field-input" id="urgency" placeholder="Votre cadeau sera validé après vérification de votre avis.">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Note légale (bas de page)</label>
+      <textarea class="field-textarea" id="rewardFooter" placeholder="En laissant un avis, vous acceptez les conditions d'utilisation de Google..."></textarea>
+    </div>
+  </div>
+
+  <!-- Mot de passe admin -->
+  <div class="card">
+    <div class="card-title">🔐 Mot de passe administrateur</div>
+    <div class="password-row">
+      <div class="field-group">
+        <label class="field-label">Nouveau mot de passe</label>
+        <input type="password" class="field-input" id="newPassword" placeholder="Laisser vide pour conserver l'actuel">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Confirmer</label>
+        <input type="password" class="field-input" id="confirmPassword" placeholder="Confirmer le nouveau mot de passe">
+      </div>
+    </div>
+    <p class="hint">Mot de passe par défaut : <strong>admin123</strong> — pensez à le changer !</p>
+  </div>
+
+  <!-- Import / Export -->
+  <div class="card">
+    <div class="card-title">💾 Sauvegarde de la configuration</div>
+    <p class="hint" style="margin-bottom: 14px">Exportez la config pour la sauvegarder ou la transférer vers un autre appareil / navigateur.</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="exportConfig()">📥 Exporter JSON</button>
+      <label class="btn btn-ghost" style="cursor:pointer">
+        📤 Importer JSON
+        <input type="file" accept=".json" style="display:none" onchange="importConfig(event)">
+      </label>
+      <button class="btn btn-danger" onclick="resetConfig()">🗑️ Réinitialiser</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Save bar -->
+<div class="save-bar" id="saveBar" style="display:none">
+  <button class="btn btn-ghost" onclick="loadFormFromConfig()">Annuler</button>
+  <button class="btn btn-success" onclick="saveConfig()">💾 Enregistrer</button>
+</div>
+
+<script>
+  const CONFIG_KEY  = 'qr_wheel_config';
+  const SESSION_KEY = 'qr_wheel_admin_session';
+
+  const DEFAULTS = {
+    adminPassword: 'admin123',
+    wheel: {
+      title:    'Tentez votre chance !',
+      subtitle: 'Tournez la roue et gagnez un cadeau exclusif',
+      footer:   '1 participation par client · Offre non cumulable',
+      prizes: [
+        { emoji: '☕', line1: 'Café',      line2: 'offert',           color: '#e74c3c' },
+        { emoji: '💜', line1: '10%',       line2: 'de réduction',     color: '#8e44ad' },
+        { emoji: '🍰', line1: 'Dessert',   line2: 'offert',           color: '#2980b9' },
+        { emoji: '💰', line1: '-5€',       line2: 'prochaine visite', color: '#16a085' },
+        { emoji: '🚚', line1: 'Livraison', line2: 'gratuite',         color: '#d35400' },
+        { emoji: '🔥', line1: '15%',       line2: 'de réduction',     color: '#c0392b' },
+        { emoji: '🥗', line1: 'Entrée',    line2: 'offerte',          color: '#27ae60' },
+        { emoji: '🥤', line1: 'Boisson',   line2: 'offerte',          color: '#2471a3' },
+      ]
+    },
+    reward: {
+      googleUrl:      'https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID_ICI',
+      validity:       'Valable lors de votre prochaine visite · Présentez cette page',
+      reviewTitle:    'Laissez-nous un avis Google ⭐',
+      reviewSubtitle: 'Votre avis nous aide énormément à nous faire connaître.\nÇa ne prend que 30 secondes et cela compte vraiment !',
+      step1:          'Cliquez sur le bouton ci-dessous',
+      step2:          'Donnez-nous 5 étoiles et laissez un petit commentaire',
+      step3:          'Revenez récupérer votre cadeau en montrant cette page !',
+      btnMain:        'Laisser un avis Google',
+      btnSub:         'Ouvre la page Google de notre établissement',
+      urgency:        'Votre cadeau sera validé par notre équipe après vérification de votre avis.',
+      footer:         "En laissant un avis, vous acceptez les conditions d'utilisation de Google.\nCadeau non échangeable contre de l'argent · Une utilisation par personne."
+    }
+  };
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function getConfig() {
+    try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || JSON.parse(JSON.stringify(DEFAULTS)); }
+    catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
+  }
+
+  function val(id)         { return document.getElementById(id).value.trim(); }
+  function set(id, v)      { document.getElementById(id).value = v || ''; }
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'toast show ' + (type || 'success');
+    setTimeout(() => { t.className = 'toast'; }, 3200);
+  }
+
+  // ── Auth ─────────────────────────────────────────────────────────────────────
+  function doLogin() {
+    const cfg = getConfig();
+    const pwd = document.getElementById('loginInput').value;
+    if (pwd === (cfg.adminPassword || DEFAULTS.adminPassword)) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      showAdminUI();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginInput').style.borderColor = '#e74c3c';
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    location.reload();
+  }
+
+  function showAdminUI() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('adminContent').style.display = 'block';
+    document.getElementById('saveBar').style.display      = 'flex';
+    loadFormFromConfig();
+  }
+
+  document.getElementById('loginInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // Auto-login if session exists
+  if (sessionStorage.getItem(SESSION_KEY)) showAdminUI();
+
+  // ── Load config into form ────────────────────────────────────────────────────
+  function loadFormFromConfig() {
+    const cfg = getConfig();
+    const w   = cfg.wheel  || {};
+    const r   = cfg.reward || {};
+
+    set('wheelTitle',    w.title    || DEFAULTS.wheel.title);
+    set('wheelSubtitle', w.subtitle || DEFAULTS.wheel.subtitle);
+    set('wheelFooter',   w.footer   || DEFAULTS.wheel.footer);
+
+    set('googleUrl',      r.googleUrl      || DEFAULTS.reward.googleUrl);
+    set('rewardValidity', r.validity       || DEFAULTS.reward.validity);
+    set('reviewTitle',    r.reviewTitle    || DEFAULTS.reward.reviewTitle);
+    set('reviewSubtitle', r.reviewSubtitle || DEFAULTS.reward.reviewSubtitle);
+    set('step1',          r.step1          || DEFAULTS.reward.step1);
+    set('step2',          r.step2          || DEFAULTS.reward.step2);
+    set('step3',          r.step3          || DEFAULTS.reward.step3);
+    set('btnMain',        r.btnMain        || DEFAULTS.reward.btnMain);
+    set('btnSub',         r.btnSub         || DEFAULTS.reward.btnSub);
+    set('urgency',        r.urgency        || DEFAULTS.reward.urgency);
+    set('rewardFooter',   r.footer         || DEFAULTS.reward.footer);
+
+    renderPrizes(w.prizes || DEFAULTS.wheel.prizes);
+  }
+
+  // ── Prizes ────────────────────────────────────────────────────────────────────
+  let prizes = [];
+
+  function renderPrizes(data) {
+    prizes = data.map(p => ({ ...p }));
+    const list = document.getElementById('prizesList');
+    list.innerHTML = '';
+    prizes.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'prize-row';
+      row.innerHTML = `
+        <input type="text" class="prize-emoji-input" value="${escHtml(p.emoji)}"
+               oninput="prizes[${i}].emoji=this.value" placeholder="🎁">
+        <input type="text" class="prize-text-input"  value="${escHtml(p.line1)}"
+               oninput="prizes[${i}].line1=this.value" placeholder="Texte ligne 1">
+        <input type="text" class="prize-text-input"  value="${escHtml(p.line2 || '')}"
+               oninput="prizes[${i}].line2=this.value" placeholder="Ligne 2 (optionnel)">
+        <input type="color" class="prize-color-input" value="${p.color || '#6c5ce7'}"
+               oninput="prizes[${i}].color=this.value">
+        <button class="prize-delete-btn" onclick="deletePrize(${i})" title="Supprimer">✕</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function addPrize() {
+    prizes.push({ emoji: '🎁', line1: 'Nouveau', line2: 'prix', color: '#6c5ce7' });
+    renderPrizes(prizes);
+  }
+
+  function deletePrize(i) {
+    if (prizes.length <= 2) { showToast('Minimum 2 prix requis', 'error'); return; }
+    prizes.splice(i, 1);
+    renderPrizes(prizes);
+  }
+
+  // ── Save ─────────────────────────────────────────────────────────────────────
+  function saveConfig() {
+    const cfg = getConfig();
+
+    // Mot de passe
+    const newPwd  = document.getElementById('newPassword').value;
+    const confPwd = document.getElementById('confirmPassword').value;
+    if (newPwd) {
+      if (newPwd !== confPwd)   { showToast('Les mots de passe ne correspondent pas', 'error'); return; }
+      if (newPwd.length < 4)    { showToast('Mot de passe trop court (4 caractères min)', 'error'); return; }
+      cfg.adminPassword = newPwd;
+      document.getElementById('newPassword').value    = '';
+      document.getElementById('confirmPassword').value = '';
+    }
+
+    const validPrizes = prizes.filter(p => p.emoji && p.line1);
+    if (validPrizes.length < 2) { showToast('Ajoutez au moins 2 prix valides', 'error'); return; }
+
+    cfg.wheel = {
+      title:    val('wheelTitle')    || DEFAULTS.wheel.title,
+      subtitle: val('wheelSubtitle') || DEFAULTS.wheel.subtitle,
+      footer:   val('wheelFooter')   || DEFAULTS.wheel.footer,
+      prizes:   validPrizes,
+    };
+
+    cfg.reward = {
+      googleUrl:      val('googleUrl')      || DEFAULTS.reward.googleUrl,
+      validity:       val('rewardValidity') || DEFAULTS.reward.validity,
+      reviewTitle:    val('reviewTitle')    || DEFAULTS.reward.reviewTitle,
+      reviewSubtitle: document.getElementById('reviewSubtitle').value || DEFAULTS.reward.reviewSubtitle,
+      step1:          val('step1')          || DEFAULTS.reward.step1,
+      step2:          val('step2')          || DEFAULTS.reward.step2,
+      step3:          val('step3')          || DEFAULTS.reward.step3,
+      btnMain:        val('btnMain')        || DEFAULTS.reward.btnMain,
+      btnSub:         val('btnSub')         || DEFAULTS.reward.btnSub,
+      urgency:        val('urgency')        || DEFAULTS.reward.urgency,
+      footer:         document.getElementById('rewardFooter').value || DEFAULTS.reward.footer,
+    };
+
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+    showToast('✓ Configuration enregistrée !', 'success');
+  }
+
+  function resetConfig() {
+    if (!confirm('Réinitialiser toute la configuration aux valeurs par défaut ?')) return;
+    localStorage.removeItem(CONFIG_KEY);
+    loadFormFromConfig();
+    showToast('Configuration réinitialisée', 'success');
+  }
+
+  // ── Import / Export ───────────────────────────────────────────────────────────
+  function exportConfig() {
+    const blob = new Blob([JSON.stringify(getConfig(), null, 2)], { type: 'application/json' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'roue-config.json';
+    a.click();
+  }
+
+  function importConfig(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const cfg = JSON.parse(e.target.result);
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+        loadFormFromConfig();
+        showToast('✓ Configuration importée !', 'success');
+      } catch {
+        showToast('Fichier JSON invalide', 'error');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+</script>
+</body>
+</html>

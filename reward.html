@@ -361,19 +361,37 @@
 </div>
 
 <script>
+  // ── Configuration externe ────────────────────────────────────────────────────
+  const CONFIG_KEY = 'qr_wheel_config';
+  const _rcfg = (() => { try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; } catch { return {}; } })();
+  const _r = _rcfg.reward || {};
+
+  // Appliquer les textes personnalisés
+  if (_r.validity)       document.querySelector('.validity').textContent      = _r.validity;
+  if (_r.reviewTitle)    document.querySelector('.review-title').textContent   = _r.reviewTitle;
+  if (_r.reviewSubtitle) document.querySelector('.review-subtitle').innerHTML  = _r.reviewSubtitle.replace(/\n/g, '<br>');
+
+  const _steps = document.querySelectorAll('.step-text');
+  if (_r.step1 && _steps[0]) _steps[0].textContent = _r.step1;
+  if (_r.step2 && _steps[1]) _steps[1].textContent = _r.step2;
+  if (_r.step3 && _steps[2]) _steps[2].textContent = _r.step3;
+
+  if (_r.btnMain) document.querySelector('.btn-text .main').textContent = _r.btnMain;
+  if (_r.btnSub)  document.querySelector('.btn-text .sub').textContent  = _r.btnSub;
+  if (_r.urgency) document.querySelector('.urgency-note').innerHTML     = '⏳ <strong>Important :</strong> ' + _r.urgency;
+  if (_r.footer)  document.querySelector('.footer-note').innerHTML      = _r.footer.replace(/\n/g, '<br>');
+
   // ── Récupération du prix depuis l'URL ───────────────────────────────────────
-  const params       = new URLSearchParams(window.location.search);
-  const prize        = params.get('prize') || '🎁 Cadeau surprise';
-  const googleUrl    = params.get('google') || '#';   // Lien Google passé en param ou configuré ici
+  const params    = new URLSearchParams(window.location.search);
+  const prize     = params.get('prize') || '🎁 Cadeau surprise';
+  const googleUrl = params.get('google') || '#';
 
   document.getElementById('prizeDisplay').textContent = prize;
 
   // ── Lien Google Review ──────────────────────────────────────────────────────
-  // PERSONNALISER ICI : remplacez par le vrai lien Google de votre établissement
-  // Format : https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID
   const GOOGLE_REVIEW_URL = googleUrl !== '#'
     ? googleUrl
-    : 'https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID_ICI';
+    : (_r.googleUrl || 'https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID_ICI');
 
   document.getElementById('reviewLink').href = GOOGLE_REVIEW_URL;
 </script>

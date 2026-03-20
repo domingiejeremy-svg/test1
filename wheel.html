@@ -269,17 +269,35 @@
 </div>
 
 <script>
+  // ── Configuration externe (lue depuis l'admin) ──────────────────────────────
+  const CONFIG_KEY = 'qr_wheel_config';
+  const _wcfg = (() => { try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; } catch { return {}; } })();
+
+  // Appliquer les textes personnalisés au DOM
+  if (_wcfg.wheel) {
+    const _w = _wcfg.wheel;
+    if (_w.title)    document.querySelector('h1').textContent           = _w.title;
+    if (_w.subtitle) document.querySelector('.subtitle').textContent    = _w.subtitle;
+    if (_w.footer)   document.querySelector('.footer-note').textContent = _w.footer;
+  }
+
   // ── Configuration des prix ──────────────────────────────────────────────────
-  const PRIZES = [
-    { label: "Café\noffert",        color: "#e74c3c", emoji: "☕" },
-    { label: "10%\nde réduction",   color: "#8e44ad", emoji: "💜" },
-    { label: "Dessert\noffert",     color: "#2980b9", emoji: "🍰" },
-    { label: "-5€\nprochaine visite",color: "#16a085",emoji: "💰" },
-    { label: "Livraison\ngratuite", color: "#d35400", emoji: "🚚" },
-    { label: "15%\nde réduction",   color: "#c0392b", emoji: "🔥" },
-    { label: "Entrée\nofferte",     color: "#27ae60", emoji: "🥗" },
-    { label: "Boisson\nofferte",    color: "#2471a3", emoji: "🥤" },
-  ];
+  const PRIZES = (_wcfg.wheel && _wcfg.wheel.prizes && _wcfg.wheel.prizes.length >= 2)
+    ? _wcfg.wheel.prizes.map(p => ({
+        label: p.line2 ? `${p.line1}\n${p.line2}` : p.line1,
+        color: p.color || '#6c5ce7',
+        emoji: p.emoji || '🎁'
+      }))
+    : [
+        { label: "Café\noffert",         color: "#e74c3c", emoji: "☕" },
+        { label: "10%\nde réduction",    color: "#8e44ad", emoji: "💜" },
+        { label: "Dessert\noffert",      color: "#2980b9", emoji: "🍰" },
+        { label: "-5€\nprochaine visite",color: "#16a085", emoji: "💰" },
+        { label: "Livraison\ngratuite",  color: "#d35400", emoji: "🚚" },
+        { label: "15%\nde réduction",    color: "#c0392b", emoji: "🔥" },
+        { label: "Entrée\nofferte",      color: "#27ae60", emoji: "🥗" },
+        { label: "Boisson\nofferte",     color: "#2471a3", emoji: "🥤" },
+      ];
 
   // ── Setup canvas ────────────────────────────────────────────────────────────
   const canvas  = document.getElementById('wheel');
