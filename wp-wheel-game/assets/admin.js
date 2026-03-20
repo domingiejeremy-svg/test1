@@ -53,12 +53,12 @@
         const pct = document.createElement('input');
         pct.type        = 'number';
         pct.value       = parseFloat(p.percent || 10).toFixed(2);
-        pct.min         = 0.01;
+        pct.min         = 0;
         pct.max         = 100;
         pct.step        = 0.01;
         pct.placeholder = '%';
         pct.addEventListener('input', () => {
-            prizes[i].percent = Math.max(0.01, parseFloat(pct.value) || 0.01);
+            prizes[i].percent = Math.max(0, parseFloat(pct.value) || 0);
             syncJson();
             updatePercentBar();
         });

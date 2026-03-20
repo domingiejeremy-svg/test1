@@ -505,7 +505,7 @@ class Wheel_Game {
                         'line1'   => sanitize_text_field( $p['line1'] ?? '' ),
                         'line2'   => sanitize_text_field( $p['line2'] ?? '' ),
                         'color'   => $color ?: '#6c5ce7',
-                        'percent' => max( 0.01, round( floatval( $p['percent'] ?? 10 ), 2 ) ),
+                        'percent' => max( 0, round( floatval( $p['percent'] ?? 10 ), 2 ) ),
                     ];
                 }, $raw ), fn( $p ) => ! empty( $p['line1'] ) ) );
 
