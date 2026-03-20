@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'WHEEL_GAME_VERSION', '1.0.0' );
+define( 'WHEEL_GAME_VERSION', '1.1.0' );
 define( 'WHEEL_GAME_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WHEEL_GAME_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -227,14 +227,14 @@ class Wheel_Game {
 
         if ( empty( $prizes ) ) {
             $prizes = [
-                [ 'emoji' => '☕', 'line1' => 'Café',      'line2' => 'offert',           'color' => '#e74c3c', 'weight' => 15 ],
-                [ 'emoji' => '💜', 'line1' => '10%',       'line2' => 'de réduction',     'color' => '#8e44ad', 'weight' => 20 ],
-                [ 'emoji' => '🍰', 'line1' => 'Dessert',   'line2' => 'offert',           'color' => '#2980b9', 'weight' => 10 ],
-                [ 'emoji' => '💰', 'line1' => '-5€',       'line2' => 'prochaine visite', 'color' => '#16a085', 'weight' => 5  ],
-                [ 'emoji' => '🚚', 'line1' => 'Livraison', 'line2' => 'gratuite',         'color' => '#d35400', 'weight' => 15 ],
-                [ 'emoji' => '🔥', 'line1' => '15%',       'line2' => 'de réduction',     'color' => '#c0392b', 'weight' => 20 ],
-                [ 'emoji' => '🥗', 'line1' => 'Entrée',    'line2' => 'offerte',          'color' => '#27ae60', 'weight' => 10 ],
-                [ 'emoji' => '🥤', 'line1' => 'Boisson',   'line2' => 'offerte',          'color' => '#2471a3', 'weight' => 5  ],
+                [ 'emoji' => '☕', 'line1' => 'Café',      'line2' => 'offert',           'color' => '#e74c3c', 'percent' => 15   ],
+                [ 'emoji' => '💜', 'line1' => '10%',       'line2' => 'de réduction',     'color' => '#8e44ad', 'percent' => 20   ],
+                [ 'emoji' => '🍰', 'line1' => 'Dessert',   'line2' => 'offert',           'color' => '#2980b9', 'percent' => 10   ],
+                [ 'emoji' => '💰', 'line1' => '-5€',       'line2' => 'prochaine visite', 'color' => '#16a085', 'percent' => 5    ],
+                [ 'emoji' => '🚚', 'line1' => 'Livraison', 'line2' => 'gratuite',         'color' => '#d35400', 'percent' => 15   ],
+                [ 'emoji' => '🔥', 'line1' => '15%',       'line2' => 'de réduction',     'color' => '#c0392b', 'percent' => 20   ],
+                [ 'emoji' => '🥗', 'line1' => 'Entrée',    'line2' => 'offerte',          'color' => '#27ae60', 'percent' => 10   ],
+                [ 'emoji' => '🥤', 'line1' => 'Boisson',   'line2' => 'offerte',          'color' => '#2471a3', 'percent' => 5    ],
             ];
         }
 
@@ -258,9 +258,9 @@ class Wheel_Game {
             .wg-hint     { font-size:11px; color:#999; margin-top:3px; line-height:1.4 }
             .wg-info     { background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 14px; font-size:12px; color:#856404; margin-bottom:14px; line-height:1.5 }
             /* Prize rows */
-            .prizes-hdr  { display:grid; grid-template-columns:52px 1fr 1fr 72px 46px 34px; gap:8px; padding:0 6px; margin-bottom:6px }
+            .prizes-hdr  { display:grid; grid-template-columns:52px 1fr 1fr 80px 46px 34px; gap:8px; padding:0 6px; margin-bottom:6px }
             .prizes-hdr span { font-size:11px; font-weight:700; color:#aaa; text-transform:uppercase }
-            .prize-row   { display:grid; grid-template-columns:52px 1fr 1fr 72px 46px 34px; gap:8px; align-items:center; background:#f8f9fb; border:1.5px solid #e0e4ea; border-radius:9px; padding:8px 6px; margin-bottom:6px; transition:border-color .2s }
+            .prize-row   { display:grid; grid-template-columns:52px 1fr 1fr 80px 46px 34px; gap:8px; align-items:center; background:#f8f9fb; border:1.5px solid #e0e4ea; border-radius:9px; padding:8px 6px; margin-bottom:6px; transition:border-color .2s }
             .prize-row:hover { border-color:#c4c9d4 }
             .prize-row input[type=text]   { padding:6px 8px; border:1.5px solid #e0e4ea; border-radius:6px; font-size:13px; width:100%; font-family:inherit }
             .prize-row input[type=text]:focus { border-color:#6c5ce7; outline:none }
@@ -310,15 +310,16 @@ class Wheel_Game {
             <div class="wg-section">
                 <h3>🎁 Prix de la roue</h3>
                 <div class="prizes-hdr">
-                    <span>Emoji</span><span>Ligne 1</span><span>Ligne 2</span><span>Poids</span><span>Couleur</span><span></span>
+                    <span>Emoji</span><span>Ligne 1</span><span>Ligne 2</span><span>%</span><span>Couleur</span><span></span>
                 </div>
                 <div id="prizes-list"></div>
                 <div id="weight-bar"></div>
                 <input type="hidden" name="wheel_prizes" id="wheel-prizes-json" value="<?php echo $prizes_json; ?>">
                 <button type="button" id="add-prize-btn">+ Ajouter un prix</button>
-                <p class="wg-hint" style="margin-top:8px">
-                    Le <strong>Poids</strong> détermine la probabilité : un poids de 50 est 5× plus probable qu'un poids de 10.
-                    Les segments restent égaux visuellement. 6 à 8 prix recommandés.
+                <p class="wg-hint" style="margin-top:8px;display:flex;align-items:center;gap:14px">
+                    <span>Entrez la <strong>probabilité en %</strong> pour chaque cadeau (ex : 60% pour un café, 0.01% pour un gros lot).
+                    La somme idéale est 100%.</span>
+                    <span id="percent-total" style="white-space:nowrap;font-size:12px">Total : —</span>
                 </p>
             </div>
 
@@ -500,11 +501,11 @@ class Wheel_Game {
                 $clean = array_values( array_filter( array_map( function( $p ) {
                     $color = sanitize_hex_color( $p['color'] ?? '#6c5ce7' );
                     return [
-                        'emoji'  => sanitize_text_field( $p['emoji'] ?? '🎁' ),
-                        'line1'  => sanitize_text_field( $p['line1'] ?? '' ),
-                        'line2'  => sanitize_text_field( $p['line2'] ?? '' ),
-                        'color'  => $color ?: '#6c5ce7',
-                        'weight' => max( 1, intval( $p['weight'] ?? 10 ) ),
+                        'emoji'   => sanitize_text_field( $p['emoji'] ?? '🎁' ),
+                        'line1'   => sanitize_text_field( $p['line1'] ?? '' ),
+                        'line2'   => sanitize_text_field( $p['line2'] ?? '' ),
+                        'color'   => $color ?: '#6c5ce7',
+                        'percent' => max( 0.01, round( floatval( $p['percent'] ?? 10 ), 2 ) ),
                     ];
                 }, $raw ), fn( $p ) => ! empty( $p['line1'] ) ) );
 

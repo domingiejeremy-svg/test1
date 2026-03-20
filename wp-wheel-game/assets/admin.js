@@ -27,7 +27,7 @@
         list.innerHTML = '';
         prizes.forEach((p, i) => list.appendChild(createRow(p, i)));
         syncJson();
-        updateWeightBar();
+        updatePercentBar();
     }
 
     // ── Créer une ligne ───────────────────────────────────────────────────────
@@ -39,34 +39,35 @@
         const emoji = inp('text', p.emoji || '🎁', 'Emoji');
         emoji.style.textAlign = 'center';
         emoji.style.fontSize  = '1.2rem';
-        emoji.addEventListener('input', () => { prizes[i].emoji = emoji.value; syncJson(); updateWeightBar(); });
+        emoji.addEventListener('input', () => { prizes[i].emoji = emoji.value; syncJson(); updatePercentBar(); });
 
         // Ligne 1
         const line1 = inp('text', p.line1 || '', 'Texte principal');
-        line1.addEventListener('input', () => { prizes[i].line1 = line1.value; syncJson(); updateWeightBar(); });
+        line1.addEventListener('input', () => { prizes[i].line1 = line1.value; syncJson(); updatePercentBar(); });
 
         // Ligne 2
         const line2 = inp('text', p.line2 || '', 'Ligne 2 (optionnel)');
         line2.addEventListener('input', () => { prizes[i].line2 = line2.value; syncJson(); });
 
-        // Poids
-        const weight = document.createElement('input');
-        weight.type        = 'number';
-        weight.value       = p.weight || 10;
-        weight.min         = 1;
-        weight.max         = 9999;
-        weight.placeholder = 'Poids';
-        weight.addEventListener('input', () => {
-            prizes[i].weight = Math.max(1, parseInt(weight.value) || 1);
+        // Pourcentage
+        const pct = document.createElement('input');
+        pct.type        = 'number';
+        pct.value       = parseFloat(p.percent || 10).toFixed(2);
+        pct.min         = 0.01;
+        pct.max         = 100;
+        pct.step        = 0.01;
+        pct.placeholder = '%';
+        pct.addEventListener('input', () => {
+            prizes[i].percent = Math.max(0.01, parseFloat(pct.value) || 0.01);
             syncJson();
-            updateWeightBar();
+            updatePercentBar();
         });
 
         // Couleur
         const color = document.createElement('input');
         color.type  = 'color';
         color.value = p.color || '#6c5ce7';
-        color.addEventListener('input', () => { prizes[i].color = color.value; syncJson(); updateWeightBar(); });
+        color.addEventListener('input', () => { prizes[i].color = color.value; syncJson(); updatePercentBar(); });
 
         // Supprimer
         const del = document.createElement('button');
@@ -79,7 +80,7 @@
         row.appendChild(emoji);
         row.appendChild(line1);
         row.appendChild(line2);
-        row.appendChild(weight);
+        row.appendChild(pct);
         row.appendChild(color);
         row.appendChild(del);
 
@@ -95,28 +96,38 @@
     }
 
     // ── Barre de probabilité visuelle ─────────────────────────────────────────
-    function updateWeightBar() {
+    function updatePercentBar() {
         const bar = document.getElementById('weight-bar');
         if (!bar) return;
 
-        const total = prizes.reduce((sum, p) => sum + (p.weight || 10), 0);
+        const total = prizes.reduce((sum, p) => sum + (parseFloat(p.percent) || 0), 0);
+
+        // Indicateur de total
+        const totalEl = document.getElementById('percent-total');
+        if (totalEl) {
+            const rounded = Math.round(total * 100) / 100;
+            const ok = Math.abs(total - 100) < 0.1;
+            totalEl.textContent = 'Total : ' + rounded.toFixed(2) + '%';
+            totalEl.style.color = ok ? '#00b894' : '#e74c3c';
+            totalEl.style.fontWeight = '700';
+        }
 
         bar.innerHTML = prizes.map(p => {
-            const w   = p.weight || 10;
-            const pct = (w / total * 100).toFixed(1);
+            const w   = parseFloat(p.percent) || 0;
+            const pct = total > 0 ? (w / total * 100).toFixed(1) : '0';
             const label = p.emoji
-                ? `${p.emoji} ${pct}%`
-                : pct + '%';
+                ? `${p.emoji} ${w.toFixed(2)}%`
+                : w.toFixed(2) + '%';
             return `<div style="flex:${w};background:${p.color || '#6c5ce7'}"
-                         title="${(p.emoji || '') + ' ' + (p.line1 || '')} → ${pct}% de chances">
-                        ${parseFloat(pct) >= 6 ? label : (parseFloat(pct) >= 3 ? pct + '%' : '')}
+                         title="${(p.emoji || '') + ' ' + (p.line1 || '')} → ${w.toFixed(2)}% de chances">
+                        ${w >= 6 ? label : (w >= 2 ? w.toFixed(2) + '%' : '')}
                     </div>`;
         }).join('');
     }
 
     // ── Ajouter ───────────────────────────────────────────────────────────────
     function addPrize() {
-        prizes.push({ emoji: '🎁', line1: 'Nouveau prix', line2: '', color: '#6c5ce7', weight: 10 });
+        prizes.push({ emoji: '🎁', line1: 'Nouveau prix', line2: '', color: '#6c5ce7', percent: 10 });
         renderAll();
         document.getElementById('prizes-list').lastChild
             ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

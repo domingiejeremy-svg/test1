@@ -422,10 +422,10 @@ const WHEEL_DATA = <?php echo wp_json_encode( $js_data ); ?>;
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const PRIZES = WHEEL_DATA.prizes.map( p => ({
-    label:  p.line2 ? `${p.line1}\n${p.line2}` : p.line1,
-    color:  p.color  || '#6c5ce7',
-    emoji:  p.emoji  || '🎁',
-    weight: p.weight || 10,
+    label:   p.line2 ? `${p.line1}\n${p.line2}` : p.line1,
+    color:   p.color   || '#6c5ce7',
+    emoji:   p.emoji   || '🎁',
+    percent: parseFloat(p.percent || p.weight || 10),
 }));
 
 // ── Canvas ───────────────────────────────────────────────────────────────────
@@ -506,14 +506,15 @@ if (WHEEL_DATA.alreadyPlayed && WHEEL_DATA.playedData) {
     showResult(false);
 }
 
-// ── Tirage pondéré ────────────────────────────────────────────────────────────
-// Le gagnant est choisi AVANT l'animation selon les poids définis dans l'admin.
-// Exemple : poids 50 = 5× plus probable que poids 10.
+// ── Tirage pondéré par pourcentage ────────────────────────────────────────────
+// Le gagnant est choisi AVANT l'animation selon les % définis dans l'admin.
+// Exemple : 60% pour un café, 0.01% pour un gros lot.
+// Les % n'ont pas besoin de totaliser exactement 100 : le tirage est proportionnel.
 function weightedRandom() {
-    const total = PRIZES.reduce((sum, p) => sum + p.weight, 0);
+    const total = PRIZES.reduce((sum, p) => sum + p.percent, 0);
     let rand = Math.random() * total;
     for (let i = 0; i < PRIZES.length; i++) {
-        rand -= PRIZES[i].weight;
+        rand -= PRIZES[i].percent;
         if (rand <= 0) return i;
     }
     return PRIZES.length - 1;
@@ -637,9 +638,9 @@ function updateTestStats() {
         const pct       = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
         const barWidth  = (count / maxCount * 100).toFixed(1);
         const label     = p.emoji + ' ' + p.label.replace('\n', ' ');
-        const wPct      = (p.weight / PRIZES.reduce((s, x) => s + x.weight, 0) * 100).toFixed(1);
+        const wPct      = p.percent.toFixed(2);
         return `<div class="stat-row">
-            <span class="stat-label" title="Poids théorique: ${wPct}%">${label}</span>
+            <span class="stat-label" title="Probabilité configurée : ${wPct}%">${label}</span>
             <div class="stat-bar-wrap">
                 <div class="stat-bar" style="width:${barWidth}%;background:${p.color}"></div>
             </div>
