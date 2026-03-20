@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'WHEEL_GAME_VERSION', '1.1.0' );
+define( 'WHEEL_GAME_VERSION', '1.2.0' );
 define( 'WHEEL_GAME_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WHEEL_GAME_URL',     plugin_dir_url( __FILE__ ) );
 

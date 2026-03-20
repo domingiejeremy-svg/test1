@@ -53,16 +53,18 @@
         const pct = document.createElement('input');
         pct.type        = 'number';
         pct.value       = (p.percent !== undefined ? parseFloat(p.percent) : 10).toFixed(2);
-        pct.min         = 0;
-        pct.max         = 100;
-        pct.step        = 0.01;
+        pct.min         = '0';
+        pct.max         = '100';
+        pct.step        = 'any';
         pct.placeholder = '%';
-        pct.addEventListener('input', () => {
+        function onPctChange() {
             const v = pct.value.trim();
-            prizes[i].percent = v === '' ? 0 : Math.max(0, parseFloat(v));
+            prizes[i].percent = v === '' ? 0 : Math.max(0, parseFloat(v) || 0);
             syncJson();
             updatePercentBar();
-        });
+        }
+        pct.addEventListener('input',  onPctChange);
+        pct.addEventListener('change', onPctChange);
 
         // Couleur
         const color = document.createElement('input');
