@@ -52,7 +52,7 @@
         // Pourcentage
         const pct = document.createElement('input');
         pct.type        = 'number';
-        pct.value       = parseFloat(p.percent || 10).toFixed(2);
+        pct.value       = (p.percent !== undefined ? parseFloat(p.percent) : 10).toFixed(2);
         pct.min         = 0;
         pct.max         = 100;
         pct.step        = 0.01;

@@ -425,7 +425,7 @@ const PRIZES = WHEEL_DATA.prizes.map( p => ({
     label:   p.line2 ? `${p.line1}\n${p.line2}` : p.line1,
     color:   p.color   || '#6c5ce7',
     emoji:   p.emoji   || '🎁',
-    percent: parseFloat(p.percent || p.weight || 10),
+    percent: p.percent !== undefined ? parseFloat(p.percent) : parseFloat(p.weight || 10),
 }));
 
 // ── Canvas ───────────────────────────────────────────────────────────────────
