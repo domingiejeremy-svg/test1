@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wheel Game — Roue des cadeaux
  * Description: Hébergez des jeux de roue personnalisés pour vos clients. Chaque campagne a sa propre URL, ses propres prix et son propre suivi des participations.
- * Version:     1.0.0
+ * Version:     1.2.0
  * Author:      Votre Nom
  * License:     GPL v2 or later
  * Text Domain: wheel-game
