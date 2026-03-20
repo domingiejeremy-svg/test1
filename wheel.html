@@ -287,10 +287,20 @@
   const N       = PRIZES.length;
   const arc     = (2 * Math.PI) / N;
   const R       = canvas.width / 2;
+  const STORAGE_KEY = 'qr_wheel_played_v1';
 
   let currentAngle = 0;
   let isSpinning   = false;
   let wonIndex     = null;
+
+  // ── Déduire le secteur gagnant depuis l'angle final ─────────────────────────
+  // La flèche pointe vers le haut (−π/2 en repère canvas).
+  // Dans le repère tourné par `angle`, elle pointe vers (−π/2 − angle).
+  // On normalise dans [0, 2π) puis on divise par arc.
+  function getWinnerFromAngle(angle) {
+    const arrowInRotatedFrame = ((-Math.PI / 2 - angle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    return Math.floor(arrowInRotatedFrame / arc) % N;
+  }
 
   function drawWheel(angle) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -352,6 +362,28 @@
 
   drawWheel(currentAngle);
 
+  // ── Anti-replay : vérifier si déjà joué ────────────────────────────────────
+  (function checkPreviousResult() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return;
+    try {
+      const data = JSON.parse(stored);
+      wonIndex = data.index;
+      currentAngle = data.angle;
+      drawWheel(currentAngle);
+
+      const spinBtn = document.getElementById('spinBtn');
+      spinBtn.disabled = true;
+      spinBtn.textContent = 'JOUÉ ✓';
+
+      document.querySelector('.subtitle').textContent = 'Vous avez déjà participé à ce tirage.';
+
+      showResult(false);
+    } catch(e) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  })();
+
   // ── Spin logic ──────────────────────────────────────────────────────────────
   function spin() {
     if (isSpinning) return;
@@ -360,18 +392,12 @@
     const spinBtn = document.getElementById('spinBtn');
     spinBtn.disabled = true;
 
-    // Choisir le prix gagnant
-    wonIndex = Math.floor(Math.random() * N);
+    // Angle final : 5–8 tours + offset aléatoire dans un secteur.
+    // Le gagnant est déterminé APRÈS l'arrêt depuis l'angle réel → jamais de décalage visuel.
+    const totalRotation = (5 + Math.random() * 3) * 2 * Math.PI + Math.random() * 2 * Math.PI;
+    const finalAngle    = currentAngle + totalRotation;
 
-    // Calculer l'angle final : aligner le secteur gagnant sous la flèche (en haut = -π/2)
-    // La flèche pointe vers le haut. En angle canvas, "haut" = angle 0 après rotation,
-    // donc on veut que le milieu du secteur wonIndex arrive à -π/2 (haut).
-    const sectorMid   = wonIndex * arc + arc / 2;
-    const targetAngle = -Math.PI / 2 - sectorMid;
-    const totalSpins  = 5 + Math.random() * 3; // 5–8 tours
-    const finalAngle  = targetAngle + totalSpins * 2 * Math.PI;
-
-    const duration   = 4500 + Math.random() * 1000; // ms
+    const duration   = 4500 + Math.random() * 1000;
     const startTime  = performance.now();
     const startAngle = currentAngle;
 
@@ -391,7 +417,14 @@
         currentAngle = finalAngle;
         drawWheel(currentAngle);
         isSpinning = false;
-        showResult();
+
+        // Gagnant déduit de la position visuelle réelle
+        wonIndex = getWinnerFromAngle(finalAngle);
+
+        // Bloquer un nouveau tour via localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ index: wonIndex, angle: finalAngle }));
+
+        showResult(true);
       }
     }
 
@@ -399,16 +432,13 @@
   }
 
   // ── Afficher le résultat ────────────────────────────────────────────────────
-  function showResult() {
+  function showResult(withConfetti) {
     const prize = PRIZES[wonIndex];
     const prizeText = prize.emoji + ' ' + prize.label.replace('\n', ' ');
 
-    // Bannière
     document.getElementById('prizeLabel').textContent = prizeText;
-    const banner = document.getElementById('resultBanner');
-    banner.style.display = 'block';
+    document.getElementById('resultBanner').style.display = 'block';
 
-    // Bouton
     const claimBtn = document.getElementById('claimBtn');
     claimBtn.style.display = 'block';
     claimBtn.onclick = () => {
@@ -416,8 +446,7 @@
       window.location.href = `reward.html?prize=${encoded}`;
     };
 
-    // Confettis
-    launchConfetti();
+    if (withConfetti) launchConfetti();
   }
 
   // ── Confettis ───────────────────────────────────────────────────────────────
