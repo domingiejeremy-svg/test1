@@ -11,8 +11,10 @@ $campaign_id = get_the_ID();
 $prize = sanitize_text_field( wp_unslash( $_GET['prize'] ?? '🎁 Cadeau surprise' ) );
 
 // Vérifier que le joueur a bien une participation enregistrée
-$cookie_key = 'wheel_played_' . $campaign_id;
-if ( ! isset( $_COOKIE[ $cookie_key ] ) ) {
+// Les admins peuvent toujours voir la page (pour prévisualiser)
+$cookie_key  = 'wheel_played_' . $campaign_id;
+$is_admin_rw = is_user_logged_in() && current_user_can( 'manage_options' );
+if ( ! isset( $_COOKIE[ $cookie_key ] ) && ! $is_admin_rw ) {
     wp_redirect( get_permalink( $campaign_id ) );
     exit;
 }
@@ -44,7 +46,7 @@ $blog_name  = get_bloginfo( 'name' );
 
     body {
       min-height: 100vh;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      background: linear-gradient(160deg, #0d1b2a 0%, #1a1a2e 50%, #0d1b2a 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -59,13 +61,14 @@ $blog_name  = get_bloginfo( 'name' );
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(circle at 20% 20%, rgba(255,215,0,0.08) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(0,200,81,0.06) 0%, transparent 50%),
-        radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 75% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 55% 65%, rgba(255,255,255,0.35) 0%, transparent 100%),
-        radial-gradient(1px 1px at 10% 75%, rgba(255,255,255,0.45) 0%, transparent 100%),
-        radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4) 0%, transparent 100%);
+        radial-gradient(ellipse at 30% 20%, rgba(255,215,0,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 80%, rgba(255,215,0,0.05) 0%, transparent 55%),
+        radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.3)  0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.4)  0%, transparent 100%),
+        radial-gradient(1px 1px at 92% 55%, rgba(255,255,255,0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 65% 10%, rgba(255,255,255,0.4)  0%, transparent 100%);
       pointer-events: none;
     }
 
@@ -77,13 +80,16 @@ $blog_name  = get_bloginfo( 'name' );
     }
 
     .prize-card {
-      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
-      backdrop-filter: blur(12px);
-      border: 2px solid rgba(255,215,0,0.4);
-      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+      backdrop-filter: blur(16px);
+      border: 2px solid rgba(255,215,0,0.45);
+      border-radius: 28px;
       padding: 32px 28px;
       text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+      box-shadow:
+        0 24px 64px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(255,215,0,0.1) inset,
+        inset 0 1px 0 rgba(255,255,255,0.1);
       animation: card-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
@@ -246,7 +252,7 @@ $blog_name  = get_bloginfo( 'name' );
       gap: 12px;
       width: 100%;
       padding: 18px 24px;
-      background: #fff;
+      background: linear-gradient(135deg, #ffd700, #cc8800);
       color: #1a1a2e;
       font-size: 1.05rem;
       font-weight: 800;
@@ -254,7 +260,7 @@ $blog_name  = get_bloginfo( 'name' );
       border-radius: 16px;
       cursor: pointer;
       text-decoration: none;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 32px rgba(255,215,0,0.4);
       transition: transform 0.15s, box-shadow 0.15s;
       animation: btn-in 0.5s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
@@ -266,14 +272,14 @@ $blog_name  = get_bloginfo( 'name' );
 
     .google-btn:hover {
       transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      box-shadow: 0 12px 40px rgba(255,215,0,0.6);
     }
 
     .google-logo { width: 28px; height: 28px; flex-shrink: 0; }
 
     .btn-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
     .btn-text .main { font-size: 1rem; font-weight: 900; color: #1a1a2e; }
-    .btn-text .sub  { font-size: 0.73rem; color: #555; font-weight: 500; }
+    .btn-text .sub  { font-size: 0.73rem; color: rgba(26,26,46,0.7); font-weight: 500; }
 
     .urgency-note {
       margin-top: 14px;
@@ -331,7 +337,20 @@ $blog_name  = get_bloginfo( 'name' );
 </head>
 <body>
 
+<?php
+$wheel_url_rw = get_permalink( $campaign_id );
+?>
 <div class="container">
+
+  <?php if ( $is_admin_rw ) : ?>
+  <div style="text-align:center;margin-bottom:12px">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,200,100,0.15);border:1.5px solid rgba(0,200,100,0.5);border-radius:50px;padding:7px 16px;font-size:0.76rem;font-weight:700;color:#00e676;letter-spacing:0.8px;text-transform:uppercase;">
+      👁️ Aperçu admin — page cadeau
+      <a href="<?php echo esc_url( $wheel_url_rw ); ?>" style="color:#80ffb4;text-decoration:underline;text-decoration-style:dotted;font-size:0.72rem;margin-left:4px;opacity:0.85;">↩ Retour roue</a>
+    </div>
+  </div>
+  <?php endif; ?>
+
   <div class="prize-card">
 
     <?php if ( $r_logo ) : ?>
