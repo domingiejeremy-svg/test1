@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wheel Game — Roue des cadeaux
  * Description: Hébergez des jeux de roue personnalisés pour vos clients. Chaque campagne a sa propre URL, ses propres prix et son propre suivi des participations.
- * Version:     1.6.0
+ * Version:     1.6.1
  * Author:      Votre Nom
  * License:     GPL v2 or later
  * Text Domain: wheel-game
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'WHEEL_GAME_VERSION', '1.6.0' );
+define( 'WHEEL_GAME_VERSION', '1.6.1' );
 define( 'WHEEL_GAME_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WHEEL_GAME_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -265,7 +265,7 @@ class Wheel_Game {
         $r_s3    = get_post_meta( $post->ID, '_reward_step3',           true ) ?: 'Revenez récupérer votre cadeau en montrant cette page !';
         $r_bm    = get_post_meta( $post->ID, '_reward_btn_main',        true ) ?: 'Laisser un avis Google';
         $r_bs    = get_post_meta( $post->ID, '_reward_btn_sub',         true ) ?: 'Ouvre la page Google de notre établissement';
-        $r_urg   = get_post_meta( $post->ID, '_reward_urgency',         true ) ?: 'Votre cadeau sera validé après vérification de votre avis.';
+        $r_urg   = get_post_meta( $post->ID, '_reward_urgency',         true ) ?: "Votre avis est totalement libre et facultatif — votre cadeau vous est acquis quoi qu'il arrive ✅";
         $r_foot  = get_post_meta( $post->ID, '_reward_footer',          true ) ?: "En laissant un avis, vous acceptez les conditions d'utilisation de Google.\nCadeau non échangeable · Une utilisation par personne.";
 
         if ( empty( $prizes ) ) {
@@ -454,8 +454,9 @@ class Wheel_Game {
                     </div>
                 </div>
                 <div class="wg-field">
-                    <label>Message d'urgence</label>
+                    <label>Message de réassurance</label>
                     <input type="text" name="reward_urgency" value="<?php echo esc_attr( $r_urg ); ?>">
+                    <p class="wg-hint">Affiché sous le bouton Google. Rappelle que le cadeau est inconditionnel.</p>
                 </div>
                 <div class="wg-field">
                     <label>Note légale (bas de page)</label>

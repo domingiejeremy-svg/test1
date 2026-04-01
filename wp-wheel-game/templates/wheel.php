@@ -297,26 +297,42 @@ $toggle_test_url  = $is_admin_test
 
     .spin-btn:disabled { cursor: not-allowed; }
 
-    /* ── Bouton récupérer ────────────────────────────────────────────── */
-    .claim-btn {
+    /* ── Countdown redirection ───────────────────────────────────────── */
+    .redirect-countdown {
       display: none;
-      margin: 18px auto 0;
-      padding: 16px 40px;
-      background: linear-gradient(135deg, #ffd700, #cc8800);
-      color: #1a1a2e;
-      font-size: 1.1rem;
-      font-weight: 900;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 6px 28px rgba(255,215,0,0.45);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      animation: pulse-gold 1.6s infinite;
-      transition: transform 0.15s;
+      margin: 14px auto 0;
+      text-align: center;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.88rem;
+      letter-spacing: 0.5px;
+      animation: fade-in 0.4s ease forwards;
     }
 
-    .claim-btn:hover { transform: scale(1.05); }
+    .redirect-countdown .dots {
+      display: inline-flex;
+      gap: 5px;
+      margin-left: 6px;
+    }
+
+    .redirect-countdown .dot-anim {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #ffd700;
+      animation: dot-pulse 1s infinite;
+    }
+
+    .redirect-countdown .dot-anim:nth-child(2) { animation-delay: 0.2s; }
+    .redirect-countdown .dot-anim:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot-pulse {
+      0%, 100% { opacity: 0.2; transform: scale(0.7); }
+      50%       { opacity: 1;   transform: scale(1); }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
     @keyframes pulse-gold {
       0%, 100% { box-shadow: 0 6px 28px rgba(255,215,0,0.45); }
@@ -499,9 +515,16 @@ $toggle_test_url  = $is_admin_test
       <div class="prize-name" id="prizeLabel"></div>
     </div>
 
-    <button class="claim-btn"         id="claimBtn">🎉 Récupérer mon cadeau</button>
-    <button class="replay-btn"        id="replayBtn"       onclick="resetForTest()">🔄 Rejouer (test)</button>
-    <button class="preview-claim-btn" id="previewClaimBtn">🎉 Récupérer mon cadeau</button>
+    <div class="redirect-countdown" id="redirectCountdown">
+      ✨ Votre cadeau vous attend
+      <span class="dots">
+        <span class="dot-anim"></span>
+        <span class="dot-anim"></span>
+        <span class="dot-anim"></span>
+      </span>
+    </div>
+
+    <button class="replay-btn" id="replayBtn" onclick="resetForTest()">🔄 Rejouer (test)</button>
 
     <?php if ( $already_played && ! $is_admin_test ) : ?>
     <p class="already-played-msg">Vous avez déjà participé à ce tirage.</p>
@@ -760,22 +783,15 @@ function showResult(withConfetti) {
     document.getElementById('resultBanner').style.display = 'block';
 
     if (WHEEL_DATA.isAdminTest) {
+        // Mode test : rejouer + stats, pas de redirection
         document.getElementById('replayBtn').style.display = 'block';
-        document.getElementById('claimBtn').style.display  = 'none';
         updateTestStats();
-    } else if (WHEEL_DATA.previewMode) {
-        // Mode aperçu visiteur : bouton cadeau fonctionnel
-        const btn = document.getElementById('previewClaimBtn');
-        btn.style.display = 'block';
-        btn.onclick = () => {
-            window.location.href = WHEEL_DATA.rewardUrl + '&prize=' + encodeURIComponent(prizeText);
-        };
     } else {
-        const claimBtn = document.getElementById('claimBtn');
-        claimBtn.style.display = 'block';
-        claimBtn.onclick = () => {
+        // Visiteur normal ou aperçu admin → redirection automatique après 1 s
+        document.getElementById('redirectCountdown').style.display = 'block';
+        setTimeout(() => {
             window.location.href = WHEEL_DATA.rewardUrl + '&prize=' + encodeURIComponent(prizeText);
-        };
+        }, 1000);
     }
 
     if (withConfetti) launchConfetti();

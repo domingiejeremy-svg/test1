@@ -22,15 +22,15 @@ if ( ! isset( $_COOKIE[ $cookie_key ] ) && ! $is_admin_rw ) {
 // Récupérer la config
 $r_logo     = get_post_meta( $campaign_id, '_reward_logo',            true ) ?: '';
 $google_url = get_post_meta( $campaign_id, '_reward_google_url',      true ) ?: '#';
-$r_valid    = get_post_meta( $campaign_id, '_reward_validity',        true ) ?: 'Valable lors de votre prochaine visite · Présentez cette page';
-$r_rtit     = get_post_meta( $campaign_id, '_reward_review_title',    true ) ?: 'Laissez-nous un avis Google ⭐';
-$r_rsub     = get_post_meta( $campaign_id, '_reward_review_subtitle', true ) ?: "Votre avis nous aide énormément à nous faire connaître.\nÇa ne prend que 30 secondes et cela compte vraiment !";
+$r_valid    = get_post_meta( $campaign_id, '_reward_validity',        true ) ?: 'Présentez cette page à notre équipe pour récupérer votre cadeau';
+$r_rtit     = get_post_meta( $campaign_id, '_reward_review_title',    true ) ?: 'Un petit avis Google en échange ? ⭐';
+$r_rsub     = get_post_meta( $campaign_id, '_reward_review_subtitle', true ) ?: "Votre avis nous aide énormément à nous faire connaître.\nÇa ne prend que 30 secondes — et ça compte vraiment pour nous !";
 $r_s1       = get_post_meta( $campaign_id, '_reward_step1',           true ) ?: 'Cliquez sur le bouton ci-dessous';
 $r_s2       = get_post_meta( $campaign_id, '_reward_step2',           true ) ?: 'Donnez-nous 5 étoiles et laissez un petit commentaire';
-$r_s3       = get_post_meta( $campaign_id, '_reward_step3',           true ) ?: 'Revenez récupérer votre cadeau en montrant cette page !';
+$r_s3       = get_post_meta( $campaign_id, '_reward_step3',           true ) ?: 'Revenez montrer cette page pour récupérer votre cadeau !';
 $r_bm       = get_post_meta( $campaign_id, '_reward_btn_main',        true ) ?: 'Laisser un avis Google';
 $r_bs       = get_post_meta( $campaign_id, '_reward_btn_sub',         true ) ?: 'Ouvre la page Google de notre établissement';
-$r_urg      = get_post_meta( $campaign_id, '_reward_urgency',         true ) ?: 'Votre cadeau sera validé par notre équipe après vérification de votre avis.';
+$r_urg      = get_post_meta( $campaign_id, '_reward_urgency',         true ) ?: 'Votre avis est totalement libre et facultatif — votre cadeau vous est acquis quoi qu\'il arrive ✅';
 $r_foot     = get_post_meta( $campaign_id, '_reward_footer',          true ) ?: "En laissant un avis, vous acceptez les conditions d'utilisation de Google.\nCadeau non échangeable contre de l'argent · Une utilisation par personne.";
 
 $blog_name  = get_bloginfo( 'name' );
@@ -283,12 +283,12 @@ $blog_name  = get_bloginfo( 'name' );
 
     .urgency-note {
       margin-top: 14px;
-      background: rgba(255,59,48,0.15);
-      border: 1px solid rgba(255,59,48,0.4);
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.3);
       border-radius: 10px;
       padding: 10px 14px;
       font-size: 0.82rem;
-      color: #ff7b72;
+      color: rgba(255,255,255,0.65);
       animation: btn-in 0.5s 1.6s both;
     }
 
@@ -361,7 +361,7 @@ $wheel_url_rw = get_permalink( $campaign_id );
     <div class="prize-badge"><?php echo esc_html( $prize ); ?></div>
     <p class="validity"><?php echo esc_html( $r_valid ); ?></p>
 
-    <div class="separator"><span>une petite faveur en échange ?</span></div>
+    <div class="separator"><span>on vous demande juste une faveur 🙏</span></div>
 
     <div class="review-section">
       <p class="review-title"><?php echo esc_html( $r_rtit ); ?></p>
@@ -402,7 +402,7 @@ $wheel_url_rw = get_permalink( $campaign_id );
       </a>
 
       <div class="urgency-note">
-        ⏳ <strong>Important :</strong> <?php echo esc_html( $r_urg ); ?>
+        <?php echo esc_html( $r_urg ); ?>
       </div>
     </div>
   </div>
