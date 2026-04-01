@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wheel Game — Roue des cadeaux
  * Description: Hébergez des jeux de roue personnalisés pour vos clients. Chaque campagne a sa propre URL, ses propres prix et son propre suivi des participations.
- * Version:     1.5.0
+ * Version:     1.5.1
  * Author:      Votre Nom
  * License:     GPL v2 or later
  * Text Domain: wheel-game
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'WHEEL_GAME_VERSION', '1.5.0' );
+define( 'WHEEL_GAME_VERSION', '1.5.1' );
 define( 'WHEEL_GAME_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'WHEEL_GAME_URL',     plugin_dir_url( __FILE__ ) );
 
@@ -696,7 +696,7 @@ class Wheel_Game {
             $post->ID
         ) );
         $history = $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM {$gtable} WHERE campaign_id = %d ORDER BY recorded_at DESC LIMIT 60",
+            "SELECT * FROM {$gtable} WHERE campaign_id = %d ORDER BY recorded_at DESC",
             $post->ID
         ) );
 
@@ -738,21 +738,29 @@ class Wheel_Game {
 
         <?php if ( $history ) : ?>
         <hr style="margin:10px 0">
-        <p style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px">Historique</p>
-        <div style="max-height:180px;overflow-y:auto">
+        <div style="display:flex;gap:0;margin-bottom:8px;border:1px solid #ddd;border-radius:6px;overflow:hidden">
+            <?php foreach ( [ '7j' => '7 jours', '30j' => '30 jours', 'all' => 'Tout' ] as $tab => $label ) : ?>
+            <button type="button" class="wg-tab" data-tab="<?php echo $tab; ?>"
+                    style="flex:1;padding:5px 0;font-size:11px;font-weight:600;border:none;cursor:pointer;background:<?php echo $tab === '7j' ? '#6c5ce7' : '#f8f9fb'; ?>;color:<?php echo $tab === '7j' ? '#fff' : '#555'; ?>;transition:background .15s">
+                <?php echo $label; ?>
+            </button>
+            <?php endforeach; ?>
+        </div>
+        <div id="wg-history-wrap" style="max-height:220px;overflow-y:auto">
         <table style="width:100%;font-size:11px;border-collapse:collapse">
-            <tr style="color:#aaa;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff">
-                <th style="text-align:left;padding:3px 0;font-weight:600">Date</th>
-                <th style="text-align:center;padding:3px 0;font-weight:600">⭐</th>
-                <th style="text-align:right;padding:3px 0;font-weight:600">Avis</th>
-                <th style="text-align:right;padding:3px 4px;font-weight:600">Δ</th>
-            </tr>
+            <thead><tr style="color:#aaa;border-bottom:1px solid #eee;background:#fff">
+                <th style="text-align:left;padding:3px 0;font-weight:600;position:sticky;top:0;background:#fff">Date</th>
+                <th style="text-align:center;padding:3px 0;font-weight:600;position:sticky;top:0;background:#fff">⭐</th>
+                <th style="text-align:right;padding:3px 0;font-weight:600;position:sticky;top:0;background:#fff">Avis</th>
+                <th style="text-align:right;padding:3px 4px;font-weight:600;position:sticky;top:0;background:#fff">Δ</th>
+            </tr></thead>
+            <tbody id="wg-history-body">
             <?php foreach ( $history as $k => $row ) :
                 $next  = $history[ $k + 1 ] ?? null;
                 $delta = $next ? ( (int) $row->review_count - (int) $next->review_count ) : null;
                 $dc    = $delta > 0 ? '#00b894' : ( $delta < 0 ? '#e74c3c' : '#bbb' );
             ?>
-            <tr style="border-bottom:1px solid #f5f5f5">
+            <tr data-date="<?php echo esc_attr( $row->recorded_at ); ?>" style="border-bottom:1px solid #f5f5f5">
                 <td style="padding:4px 0;color:#555"><?php echo esc_html( $row->recorded_at ); ?></td>
                 <td style="text-align:center;padding:4px 0"><?php echo number_format( (float) $row->rating, 1 ); ?></td>
                 <td style="text-align:right;padding:4px 0;font-weight:700"><?php echo (int) $row->review_count; ?></td>
@@ -761,6 +769,7 @@ class Wheel_Game {
                 </td>
             </tr>
             <?php endforeach; ?>
+            </tbody>
         </table>
         </div>
         <?php else : ?>
@@ -775,6 +784,34 @@ class Wheel_Game {
         <div id="wg-fetch-msg" style="font-size:11px;margin-top:6px;text-align:center;min-height:16px"></div>
 
         <script>
+        (function() {
+            // ── Onglets historique ──
+            var tabs = document.querySelectorAll('.wg-tab');
+            tabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(function(t) {
+                        t.style.background = '#f8f9fb';
+                        t.style.color      = '#555';
+                    });
+                    tab.style.background = '#6c5ce7';
+                    tab.style.color      = '#fff';
+                    var filter = tab.dataset.tab;
+                    var cutoff = null;
+                    if (filter !== 'all') {
+                        var days   = filter === '7j' ? 7 : 30;
+                        var d      = new Date();
+                        d.setDate(d.getDate() - days + 1);
+                        cutoff = d.toISOString().slice(0, 10);
+                    }
+                    document.querySelectorAll('#wg-history-body tr').forEach(function(row) {
+                        row.style.display = (!cutoff || row.dataset.date >= cutoff) ? '' : 'none';
+                    });
+                });
+            });
+            // Appliquer le filtre par défaut (7j)
+            tabs[0] && tabs[0].click();
+        })();
+
         function wgFetchStats(campaignId, nonce) {
             var btn = document.getElementById('wg-fetch-btn');
             var msg = document.getElementById('wg-fetch-msg');
