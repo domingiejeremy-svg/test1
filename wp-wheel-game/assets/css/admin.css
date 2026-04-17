@@ -1,0 +1,116 @@
+/* Wheel Game — Admin CSS */
+
+/* Onglets */
+.wg-tabs-wrap { max-width: 920px; }
+.wg-tabs-nav { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 2px solid #e0e4ea; margin-bottom: 20px; }
+.wg-tab-btn {
+    background: #f8f9fb; border: 2px solid transparent; border-bottom: none; cursor: pointer;
+    padding: 10px 16px; font-size: 13px; font-weight: 600; color: #555;
+    border-radius: 8px 8px 0 0; transition: background .15s;
+}
+.wg-tab-btn:hover { background: #eef0f3; }
+.wg-tab-btn.is-active { background: #fff; color: #1a1a2e; border-color: #e0e4ea; position: relative; top: 2px; }
+.wg-tab-content { display: none; padding: 4px 2px 20px; }
+.wg-tab-content.is-active { display: block; animation: wg-fade .15s ease; }
+@keyframes wg-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Champs */
+.wg-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.wg-field { margin-bottom: 12px; }
+.wg-field label { display: block; font-size: 11.5px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
+.wg-field input[type=text], .wg-field input[type=url], .wg-field input[type=email],
+.wg-field input[type=number], .wg-field input[type=date], .wg-field input[type=password],
+.wg-field textarea, .wg-field select {
+    width: 100%; border: 2px solid #e0e4ea; border-radius: 7px;
+    padding: 8px 11px; font-size: 13px; font-family: inherit; transition: border-color .2s;
+}
+.wg-field input:focus, .wg-field textarea:focus, .wg-field select:focus {
+    border-color: #6c5ce7; outline: none; box-shadow: 0 0 0 3px rgba(108,92,231,.1);
+}
+.wg-field textarea { min-height: 62px; resize: vertical; }
+.wg-hint { font-size: 11px; color: #999; margin-top: 3px; line-height: 1.4; }
+.wg-info { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #856404; margin-bottom: 14px; line-height: 1.5; }
+.wg-warn { background: #fce4e4; border: 1px solid #e74c3c; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #721c24; margin-top: 14px; }
+.wg-toggle { display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: 14px; padding: 8px 0; }
+.wg-toggle input[type=checkbox] { width: 18px; height: 18px; }
+
+/* Templates picker */
+.wg-tpl-picker {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    background: #f8f9fb; border: 1px dashed #c4c9d4; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 18px;
+}
+.wg-tpl-label { font-size: 12px; font-weight: 700; color: #555; margin-right: 6px; }
+.wg-tpl-btn { font-size: 12px !important; }
+
+/* Prize rows */
+.prizes-hdr { display: grid; grid-template-columns: 52px 1fr 1fr 80px 46px 34px; gap: 8px; padding: 0 6px; margin-bottom: 6px; }
+.prizes-hdr span { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; }
+.prize-row {
+    display: grid; grid-template-columns: 52px 1fr 1fr 80px 46px 34px; gap: 8px; align-items: center;
+    background: #f8f9fb; border: 1.5px solid #e0e4ea; border-radius: 9px;
+    padding: 8px 6px; margin-bottom: 6px; transition: border-color .2s;
+}
+.prize-row:hover { border-color: #c4c9d4; }
+.prize-row input[type=text], .prize-row input[type=number] {
+    padding: 6px 8px; border: 1.5px solid #e0e4ea; border-radius: 6px; font-size: 13px; width: 100%; font-family: inherit;
+}
+.prize-row input[type=number] { text-align: center; }
+.prize-row input:focus { border-color: #6c5ce7; outline: none; }
+.prize-row input[type=color] { width: 46px; height: 34px; border: 1.5px solid #e0e4ea; border-radius: 6px; padding: 2px; cursor: pointer; }
+.prize-row .del-btn { background: #fff0f0; color: #e74c3c; border: none; border-radius: 6px; width: 32px; height: 32px; cursor: pointer; font-size: 14px; font-weight: 700; }
+.prize-row .del-btn:hover { background: #ffe0e0; }
+
+#weight-bar { height: 28px; border-radius: 8px; overflow: hidden; display: flex; margin-top: 10px; border: 1px solid #e0e4ea; }
+#weight-bar div {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,.95);
+    overflow: hidden; white-space: nowrap; padding: 0 3px; transition: flex .3s;
+}
+#add-prize-btn {
+    margin-top: 6px; width: 100%; padding: 9px;
+    background: #f4f6f9; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: #666; font-family: inherit;
+}
+#add-prize-btn:hover { background: #eef0f3; border-color: #aaa; }
+
+/* Monte Carlo */
+.wg-mc-panel { margin-top: 24px; background: #f8f9fb; border: 1px solid #e0e4ea; border-radius: 10px; padding: 14px 16px; }
+.wg-mc-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.wg-mc-head strong { font-size: 13px; color: #1a1a2e; }
+.wg-mc-head label { font-size: 12px; color: #666; display: flex; align-items: center; gap: 6px; }
+.wg-mc-head select { font-size: 12px; padding: 4px 6px; }
+#mc-results { font-size: 12px; }
+.mc-row { display: grid; grid-template-columns: 1fr 80px 80px 90px; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eef0f3; align-items: center; }
+.mc-row.mc-head-row { font-weight: 700; color: #666; font-size: 11px; text-transform: uppercase; }
+.mc-color { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.mc-deviation { font-weight: 700; font-size: 11px; margin-left: 2px; }
+
+/* Sidebar */
+.wg-sidebar-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center; margin-bottom: 10px; }
+.stat-block { background: #f8f9fb; border-radius: 8px; padding: 8px 4px; }
+.stat-num { font-size: 20px; font-weight: 800; color: #6c5ce7; }
+.stat-label { font-size: 10px; color: #999; margin-top: 2px; }
+.wg-conversion { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 8px 10px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.wg-conversion strong { color: #00b894; font-size: 14px; }
+.wg-side-label { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
+.wg-dist-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.wg-url-field { width: 100%; font-size: 11px; margin-bottom: 6px; font-family: monospace; }
+
+/* Dashboard */
+.wheel-dashboard .wg-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 20px; }
+.wg-kpi { background: #fff; border-left: 4px solid #aaa; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.wg-kpi .val { font-size: 28px; font-weight: 900; color: #1a1a2e; line-height: 1.1; }
+.wg-kpi .lbl { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+
+/* Templates page */
+.wg-tpl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+.wg-tpl-card { background: #fff; border: 1px solid #e0e4ea; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.wg-tpl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.wg-tpl-emoji { font-size: 22px; }
+.wg-tpl-head h3 { margin: 0; font-size: 15px; }
+.wg-tpl-title { font-style: italic; color: #666; font-size: 12px; margin-bottom: 10px; }
+.wg-tpl-prizes { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.wg-tpl-prizes li { display: flex; align-items: center; gap: 4px; padding: 3px 0; border-top: 1px dashed #eef0f3; }
+.wg-tpl-color { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.wg-tpl-prizes em { color: #6c5ce7; font-style: normal; font-weight: 700; margin-left: auto; }
