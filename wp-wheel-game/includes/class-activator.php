@@ -8,16 +8,29 @@ class Wheel_Game_Activator {
 
     public static function activate() {
         require_once WHEEL_GAME_DIR . 'includes/class-cpt.php';
+        require_once WHEEL_GAME_DIR . 'includes/class-config-page.php';
         ( new Wheel_Game_Cpt() )->register_cpt();
+        ( new Wheel_Game_Config_Page() )->add_rewrite();
         flush_rewrite_rules();
 
         self::create_tables();
+        self::create_role();
         update_option( 'wheel_game_db_version', WHEEL_GAME_DB_VERSION );
 
         if ( ! wp_next_scheduled( 'wheel_daily_google_fetch' ) ) {
             $timestamp = strtotime( 'tomorrow 03:17' );
             wp_schedule_event( $timestamp, 'daily', 'wheel_daily_google_fetch' );
         }
+    }
+
+    /**
+     * Rôle "Commerçant" : accès limité à son espace + sa roue.
+     */
+    public static function create_role() {
+        if ( get_role( 'wheel_merchant' ) ) return;
+        add_role( 'wheel_merchant', __( 'Commerçant BVR', 'wheel-game' ), [
+            'read' => true,
+        ] );
     }
 
     public static function deactivate() {
@@ -117,5 +130,9 @@ class Wheel_Game_Activator {
         foreach ( $posts as $pid ) wp_delete_post( $pid, true );
 
         wp_clear_scheduled_hook( 'wheel_daily_google_fetch' );
+
+        if ( get_role( 'wheel_merchant' ) ) {
+            remove_role( 'wheel_merchant' );
+        }
     }
 }

@@ -9,6 +9,7 @@ final class Wheel_Game_Plugin {
     private static $instance = null;
 
     public $cpt, $admin, $ajax, $google, $cron, $leads, $analytics, $router, $assets;
+    public $config_page, $product_meta, $order_hook;
 
     public static function get_instance() {
         if ( null === self::$instance ) self::$instance = new self();
@@ -27,6 +28,7 @@ final class Wheel_Game_Plugin {
         $this->cron      = new Wheel_Game_Cron();
         $this->leads     = new Wheel_Game_Leads();
         $this->analytics = new Wheel_Game_Analytics();
+        $this->config_page = new Wheel_Game_Config_Page();
 
         $this->cpt->init();
         $this->router->init();
@@ -34,5 +36,21 @@ final class Wheel_Game_Plugin {
         $this->admin->init();
         $this->ajax->init();
         $this->cron->init();
+        $this->config_page->init();
+
+        // Modules conditionnels : WooCommerce
+        if ( class_exists( 'WooCommerce' ) ) {
+            $this->product_meta = new Wheel_Game_Product_Meta();
+            $this->order_hook   = new Wheel_Game_Order_Hook();
+            $this->product_meta->init();
+            $this->order_hook->init();
+        } else {
+            add_action( 'admin_notices', function () {
+                if ( ! current_user_can( 'activate_plugins' ) ) return;
+                echo '<div class="notice notice-warning"><p><strong>Wheel Game :</strong> ' .
+                    esc_html__( 'WooCommerce n\'est pas actif. L\'auto-création de roue à la commande est désactivée.', 'wheel-game' ) .
+                    '</p></div>';
+            } );
+        }
     }
 }

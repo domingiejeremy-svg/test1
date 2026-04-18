@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.1.0] — 2026-04-18
+
+### Onboarding client automatisé
+
+- 🆕 **Auto-création de la roue à la commande WooCommerce** — dès paiement reçu, la campagne est créée en brouillon avec le template générique. Le client reçoit un email avec un lien unique pour paramétrer sa roue.
+- 🆕 **Champ "Offre BVR"** sur les produits WooCommerce — dropdown Starter / Booster / All Inclusive. Détermine le quota de modifs et les features débloquées.
+- 🆕 **Page publique `/configurer-ma-roue/`** — interface premium, standalone (pas dans wp-admin) avec :
+  - Formulaire complet : nom, prix/probas, couleurs, logo
+  - Upload logo par drag-and-drop
+  - Preview live de la roue pendant la saisie
+  - Écran de récap avant validation finale
+  - Modal de succès avec URL à copier
+- 🆕 **Redirection automatique** de la page "Merci" WooCommerce vers `/configurer-ma-roue/`
+- 🆕 **Classe `Wheel_Game_Offer`** — gère les règles par tier :
+  - Starter : 1 modif/an, 500 tirages/mois, stats de base
+  - Booster : 5 modifs/an, 2000 tirages/mois, stats avancées, capture lead, rapport mensuel
+  - All Inclusive : modifs illimitées, tirages illimités, + alertes avis, roues saisonnières, sync Mailchimp, dashboard partagé
+- 🆕 **Compteur de modifications** automatique — décompte à chaque publication après la 1ère, blocage si quota atteint avec message de contact.
+- 🆕 **Token de configuration unique** — permet au client d'accéder à sa page de config sans login (via lien email).
+- 🆕 **Rôle WP `wheel_merchant`** — créé à l'activation, préparé pour l'espace client restreint (v2.2).
+- 🆕 **Création automatique du compte WP** pour les guest checkouts.
+
+### Corrections
+
+- 🐛 Détection de l'offre via les line items de la commande (priorité à la plus haute si plusieurs produits).
+
 ## [2.0.0] — 2026-04-17
 
 ### Refonte architecturale complète
