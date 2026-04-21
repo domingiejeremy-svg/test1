@@ -4,7 +4,7 @@ Tags: roue, cadeau, avis, google, reviews, lead, gamification
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 2.3.2
+Stable tag: 2.3.3
 License: GPLv2 or later
 
 Plateforme de jeux de roue pour commerçants : capturez des leads et boostez vos avis Google grâce à la gamification.

@@ -144,40 +144,27 @@ class Wheel_Game_Order_Hook {
     }
 
     /**
-     * Email de reprise de config.
+     * Email de reprise de config (template éditable via admin).
      */
     private function send_config_email( $order, $campaign_id, $token ) {
-        $to       = $order->get_billing_email();
+        $to = $order->get_billing_email();
         if ( ! $to ) return;
 
-        $fname    = $order->get_billing_first_name();
-        $config_url = self::build_config_url( $campaign_id, $token );
+        $fname = $order->get_billing_first_name();
+        $lname = $order->get_billing_last_name();
         $offer = Wheel_Game_Offer::for_campaign( $campaign_id );
-        $offer_label = Wheel_Game_Offer::label( $offer );
 
-        $subject = sprintf(
-            /* translators: 1: site name */
-            __( '🎡 Paramétrez votre roue cadeaux — %s', 'wheel-game' ),
-            get_bloginfo( 'name' )
+        Wheel_Game_Mail::send(
+            Wheel_Game_Mail::TYPE_CONFIG_EMAIL,
+            $to,
+            [
+                'client_first_name' => $fname,
+                'client_last_name'  => $lname,
+                'client_full_name'  => trim( $fname . ' ' . $lname ),
+                'offer_label'       => Wheel_Game_Offer::label( $offer ),
+                'config_url'        => self::build_config_url( $campaign_id, $token ),
+            ],
+            [ 'campaign_id' => $campaign_id, 'order_id' => $order->get_id() ]
         );
-
-        $body  = sprintf( __( "Bonjour %s,\n\n", 'wheel-game' ), $fname ) .
-            __( "Merci pour votre commande ! Votre roue cadeaux vous attend : il ne reste qu'à la personnaliser.\n\n", 'wheel-game' ) .
-            sprintf( __( "Offre : %s\n\n", 'wheel-game' ), $offer_label ) .
-            __( "👉 Cliquez ici pour paramétrer votre roue :\n", 'wheel-game' ) .
-            $config_url . "\n\n" .
-            __( "Vous pourrez :\n", 'wheel-game' ) .
-            __( "• Choisir vos cadeaux et leurs probabilités\n", 'wheel-game' ) .
-            __( "• Personnaliser les couleurs aux couleurs de votre marque\n", 'wheel-game' ) .
-            __( "• Ajouter votre logo\n\n", 'wheel-game' ) .
-            __( "Une fois validée, vous recevrez votre lien public + QR code.\n\n", 'wheel-game' ) .
-            __( "À très vite,\nL'équipe Boostez Votre Réputation", 'wheel-game' );
-
-        $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
-
-        wp_mail( $to, $subject, $body, $headers );
-
-        // Log
-        Wheel_Game_Cron::log( $campaign_id, 'config_email', 'sent', 'to=' . $to );
     }
 }

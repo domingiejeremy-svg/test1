@@ -109,6 +109,22 @@ class Wheel_Game_Activator {
             PRIMARY KEY  (id),
             KEY created_at (created_at)
         ) {$charset};" );
+
+        dbDelta( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wheel_mail_log (
+            id           bigint(20)   NOT NULL AUTO_INCREMENT,
+            type         varchar(50)  NOT NULL DEFAULT '',
+            recipient    varchar(190) NOT NULL DEFAULT '',
+            subject      varchar(255) NOT NULL DEFAULT '',
+            body         longtext,
+            status       varchar(20)  NOT NULL DEFAULT '',
+            campaign_id  bigint(20)   NOT NULL DEFAULT 0,
+            order_id     bigint(20)   NOT NULL DEFAULT 0,
+            created_at   datetime     NOT NULL,
+            PRIMARY KEY  (id),
+            KEY type (type),
+            KEY recipient (recipient),
+            KEY created_at (created_at)
+        ) {$charset};" );
     }
 
     public static function uninstall() {
@@ -118,6 +134,8 @@ class Wheel_Game_Activator {
             "{$wpdb->prefix}wheel_google_stats",
             "{$wpdb->prefix}wheel_leads",
             "{$wpdb->prefix}wheel_cron_log",
+            "{$wpdb->prefix}wheel_mail_log",
+            "{$wpdb->prefix}wheel_prospect_tracking",
         ];
         foreach ( $tables as $t ) $wpdb->query( "DROP TABLE IF EXISTS {$t}" );
 

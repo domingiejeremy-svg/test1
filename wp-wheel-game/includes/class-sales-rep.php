@@ -248,41 +248,34 @@ class Wheel_Game_Sales_Rep {
     }
 
     /**
-     * Envoie un email au commercial pour sa nouvelle vente.
+     * Envoie un email au commercial pour sa nouvelle vente (template éditable).
      */
     public static function notify_rep( $rep, $order, $commission_amt, $attribution_type = 'direct' ) {
         $to = $rep->user_email;
         if ( ! $to ) return;
 
-        $type_label = $attribution_type === 'lifetime'
-            ? __( '🔁 Renouvellement client', 'wheel-game' )
-            : __( '🔥 Nouvelle vente directe', 'wheel-game' );
+        $type = $attribution_type === 'lifetime'
+            ? Wheel_Game_Mail::TYPE_SALES_LIFETIME
+            : Wheel_Game_Mail::TYPE_SALES_DIRECT;
 
-        $subject = sprintf(
-            __( '🎉 %s — %s', 'wheel-game' ),
-            $attribution_type === 'lifetime' ? 'Renouvellement' : 'Nouvelle vente',
-            $order->get_formatted_billing_full_name()
+        $commission_rate = (float) get_user_meta( $rep->ID, self::META_COMMISSION, true );
+        $amount_ht = (float) $order->get_subtotal() - (float) $order->get_total_discount();
+
+        Wheel_Game_Mail::send(
+            $type,
+            $to,
+            [
+                'rep_first_name'    => $rep->first_name ?: $rep->display_name,
+                'rep_full_name'     => $rep->display_name,
+                'order_number'      => $order->get_order_number(),
+                'client_name'       => $order->get_formatted_billing_full_name(),
+                'amount_ht'         => wp_strip_all_tags( wc_price( $amount_ht ) ),
+                'commission_rate'   => number_format( $commission_rate, 2 ),
+                'commission_amount' => wp_strip_all_tags( wc_price( $commission_amt ) ),
+                'space_url'         => home_url( '/espace-commercial/' ),
+            ],
+            [ 'order_id' => $order->get_id() ]
         );
-        $intro = $attribution_type === 'lifetime'
-            ? __( "Bonne nouvelle ! Un de vos clients vient de renouveler/repasser commande — votre commission tombe automatiquement :\n\n", 'wheel-game' )
-            : __( "Une nouvelle commande vient d'être passée avec votre code :\n\n", 'wheel-game' );
-
-        $body  = sprintf( __( "Bonjour %s,\n\n", 'wheel-game' ), $rep->display_name ) .
-            $intro .
-            sprintf( __( "Type : %s\n", 'wheel-game' ), $type_label ) .
-            sprintf( __( "Commande : #%s\n", 'wheel-game' ), $order->get_order_number() ) .
-            sprintf( __( "Client : %s\n", 'wheel-game' ), $order->get_formatted_billing_full_name() ) .
-            sprintf( __( "Montant HT : %s\n", 'wheel-game' ), wc_price( $order->get_subtotal() - $order->get_total_discount() ) ) .
-            sprintf( __( "Votre commission (%.2f%%) : %s\n\n", 'wheel-game' ),
-                (float) get_user_meta( $rep->ID, self::META_COMMISSION, true ),
-                wc_price( $commission_amt )
-            ) .
-            __( "Retrouvez tous vos détails dans votre espace :\n", 'wheel-game' ) .
-            home_url( '/espace-commercial/' ) . "\n\n" .
-            __( "Bonne journée !\nL'équipe BVR", 'wheel-game' );
-
-        $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
-        wp_mail( $to, wp_strip_all_tags( $subject ), wp_strip_all_tags( $body ), $headers );
     }
 
     /**

@@ -32,6 +32,10 @@ class Wheel_Game_Admin {
             'manage_options', 'wheel-game-sales',     [ $this, 'render_sales_page' ] );
         add_submenu_page( $parent, __( 'Offres & Features', 'wheel-game' ), '⚙️ ' . __( 'Offres & Features', 'wheel-game' ),
             'manage_options', 'wheel-game-features',  [ $this, 'render_features_page' ] );
+        add_submenu_page( $parent, __( 'Templates emails', 'wheel-game' ), '✉️ ' . __( 'Templates emails', 'wheel-game' ),
+            'manage_options', 'wheel-game-mail-templates', [ $this, 'render_mail_templates_page' ] );
+        add_submenu_page( $parent, __( 'Journal emails', 'wheel-game' ),   '📬 ' . __( 'Journal emails', 'wheel-game' ),
+            'manage_options', 'wheel-game-mail-log',  [ $this, 'render_mail_log_page' ] );
         add_submenu_page( $parent, __( 'Réglages', 'wheel-game' ),         '🔧 ' . __( 'Réglages', 'wheel-game' ),
             'manage_options', 'wheel-game-settings',  [ $this, 'render_settings_page' ] );
     }
@@ -42,6 +46,14 @@ class Wheel_Game_Admin {
 
     public function render_sales_page() {
         include WHEEL_GAME_DIR . 'includes/views/page-sales-reps.php';
+    }
+
+    public function render_mail_log_page() {
+        include WHEEL_GAME_DIR . 'includes/views/page-mail-log.php';
+    }
+
+    public function render_mail_templates_page() {
+        include WHEEL_GAME_DIR . 'includes/views/page-mail-templates.php';
     }
 
     public function register_meta_boxes() {

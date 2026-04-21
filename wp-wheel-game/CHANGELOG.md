@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.3.3] — 2026-04-21
+
+### Emails : journal + templates éditables
+
+- 🆕 **Classe `Wheel_Game_Mail`** — centralise tous les envois d'emails du plugin. Chaque email est **loggé en BDD** (table `wheel_mail_log`) avec sujet, corps, destinataire, statut (envoyé/échec), type, campagne, commande. Purge auto à 90 jours.
+- 🆕 **Page admin `📬 Journal emails`** — consulter tous les emails envoyés (filtre par type/statut/destinataire), voir le contenu exact, **renvoyer** un email d'un clic.
+- 🆕 **Page admin `✉️ Templates emails`** — éditeur WYSIWYG pour chaque type d'email :
+  - Paramétrage de la roue (après commande)
+  - Alerte gros lot gagné
+  - Notif vente directe au commercial
+  - Notif renouvellement au commercial
+- 🆕 **Variables dynamiques** `{variable}` insérables dans sujet + corps. Chaque template liste ses variables disponibles avec descriptions, cliquables pour copier dans le presse-papier.
+- 🆕 **Bouton "Restaurer le défaut"** par template si on veut revenir au texte original.
+- 🔄 **Refactor** : toutes les occurrences de `wp_mail()` dans le plugin passent maintenant par `Wheel_Game_Mail::send()` pour être loggées et utiliser les templates configurables.
+
 ## [2.3.2] — 2026-04-21
 
 ### Attribution des clients à vie

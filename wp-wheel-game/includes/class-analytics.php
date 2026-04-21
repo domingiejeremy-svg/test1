@@ -74,18 +74,19 @@ class Wheel_Game_Analytics {
             }
         }
 
-        $subject = sprintf(
-            __( '🎉 Gros lot gagné sur votre roue — %s', 'wheel-game' ),
-            get_the_title( $campaign_id ) );
-        $body = sprintf(
-            "%s\n\n%s : %s %s %s (%.2f%%)\n%s : %s\n\n%s : %s",
-            __( 'Un participant vient de gagner un gros lot sur votre roue !', 'wheel-game' ),
-            __( 'Prix', 'wheel-game' ),
-            $prize['emoji'] ?? '', $prize['line1'] ?? '', $prize['line2'] ?? '',
-            $percent,
-            __( 'Participant', 'wheel-game' ), $lead_info,
-            __( 'Voir la campagne', 'wheel-game' ), get_edit_post_link( $campaign_id, '' )
+        Wheel_Game_Mail::send(
+            Wheel_Game_Mail::TYPE_BIG_PRIZE,
+            $email,
+            [
+                'campaign_name' => get_the_title( $campaign_id ),
+                'prize_emoji'   => $prize['emoji'] ?? '',
+                'prize_line1'   => $prize['line1'] ?? '',
+                'prize_line2'   => $prize['line2'] ?? '',
+                'prize_percent' => number_format( $percent, 2 ),
+                'lead_info'     => $lead_info,
+                'edit_url'      => get_edit_post_link( $campaign_id, '' ),
+            ],
+            [ 'campaign_id' => $campaign_id ]
         );
-        wp_mail( $email, $subject, $body );
     }
 }
