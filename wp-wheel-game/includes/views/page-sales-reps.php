@@ -71,9 +71,9 @@ echo $notice;
 // Édition
 if ( $action === 'edit' && $edit_id ) :
     $rep = get_user_by( 'id', $edit_id );
-    if ( ! $rep || ! in_array( Wheel_Game_Sales_Rep::ROLE, $rep->roles, true ) ) {
+    if ( ! $rep || ! in_array( Wheel_Game_Sales_Rep::ROLE, $rep->roles, true ) ) :
         echo '<div class="notice notice-error"><p>Commercial introuvable.</p></div>';
-    } else :
+    else :
         $phone      = get_user_meta( $rep->ID, Wheel_Game_Sales_Rep::META_PHONE, true );
         $coupon     = get_user_meta( $rep->ID, Wheel_Game_Sales_Rep::META_COUPON, true );
         $commission = get_user_meta( $rep->ID, Wheel_Game_Sales_Rep::META_COMMISSION, true );

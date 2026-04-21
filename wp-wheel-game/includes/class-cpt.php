@@ -43,6 +43,7 @@ class Wheel_Game_Cpt {
         return [
             'cb'     => $cols['cb'],
             'title'  => __( 'Campagne', 'wheel-game' ),
+            'offer'  => __( 'Offre', 'wheel-game' ),
             'url'    => __( 'URL publique', 'wheel-game' ),
             'plays'  => __( 'Tirages', 'wheel-game' ),
             'leads'  => __( 'Leads', 'wheel-game' ),
@@ -53,6 +54,7 @@ class Wheel_Game_Cpt {
     }
 
     public function sortable_columns( $cols ) {
+        $cols['offer']  = 'offer';
         $cols['plays']  = 'plays';
         $cols['leads']  = 'leads';
         $cols['clicks'] = 'clicks';
@@ -61,6 +63,28 @@ class Wheel_Game_Cpt {
 
     public function admin_column_content( $col, $post_id ) {
         global $wpdb;
+
+        if ( $col === 'offer' ) {
+            $slug = Wheel_Game_Offer::for_campaign( $post_id );
+            $offer = Wheel_Game_Offer::get( $slug );
+            $colors = [
+                'starter' => '#c2410c',
+                'booster' => '#6b21a8',
+                'premium' => '#b45309',
+            ];
+            $bgs = [
+                'starter' => '#fff0e6',
+                'booster' => '#f3e8ff',
+                'premium' => '#fef3c7',
+            ];
+            printf(
+                '<span style="background:%s;color:%s;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;letter-spacing:.3px;white-space:nowrap">%s</span>',
+                esc_attr( $bgs[ $slug ] ?? '#f3f4f6' ),
+                esc_attr( $colors[ $slug ] ?? '#374151' ),
+                esc_html( $offer['emoji'] . ' ' . $offer['label'] )
+            );
+            return;
+        }
 
         if ( $col === 'url' ) {
             $url = get_permalink( $post_id );

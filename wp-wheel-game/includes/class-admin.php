@@ -162,19 +162,28 @@ class Wheel_Game_Admin {
         // Overrides features (admin only)
         if ( current_user_can( 'manage_options' )
             && isset( $_POST['wheel_features_override_nonce'] )
-            && wp_verify_nonce( $_POST['wheel_features_override_nonce'], 'wheel_features_override' )
-            && isset( $_POST['feat_override'] ) ) {
-            $extra   = [];
-            $removed = [];
-            foreach ( (array) $_POST['feat_override'] as $slug => $action ) {
-                $slug   = sanitize_key( $slug );
-                $action = sanitize_key( $action );
-                if ( ! isset( Wheel_Game_Features::registry()[ $slug ] ) ) continue;
-                if ( $action === 'add' )    $extra[]   = $slug;
-                if ( $action === 'remove' ) $removed[] = $slug;
+            && wp_verify_nonce( $_POST['wheel_features_override_nonce'], 'wheel_features_override' ) ) {
+
+            // Choix de l'offre (Starter/Booster/Premium)
+            if ( isset( $_POST['wheel_offer_slug'] ) ) {
+                $slug = sanitize_key( wp_unslash( $_POST['wheel_offer_slug'] ) );
+                Wheel_Game_Offer::set_for_campaign( $post_id, $slug );
             }
-            update_post_meta( $post_id, '_wheel_features_extra',   $extra );
-            update_post_meta( $post_id, '_wheel_features_removed', $removed );
+
+            // Overrides +/- feature par feature
+            if ( isset( $_POST['feat_override'] ) ) {
+                $extra   = [];
+                $removed = [];
+                foreach ( (array) $_POST['feat_override'] as $slug => $action ) {
+                    $slug   = sanitize_key( $slug );
+                    $action = sanitize_key( $action );
+                    if ( ! isset( Wheel_Game_Features::registry()[ $slug ] ) ) continue;
+                    if ( $action === 'add' )    $extra[]   = $slug;
+                    if ( $action === 'remove' ) $removed[] = $slug;
+                }
+                update_post_meta( $post_id, '_wheel_features_extra',   $extra );
+                update_post_meta( $post_id, '_wheel_features_removed', $removed );
+            }
         }
 
         do_action( 'wheel_game_after_save_campaign', $post_id );

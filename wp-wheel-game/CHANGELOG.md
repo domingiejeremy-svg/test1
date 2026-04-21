@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.1] — 2026-04-21
+
+### Ajouts
+- 🆕 **Colonne "Offre"** dans la liste de toutes les campagnes (avec badge coloré Starter/Booster/Premium). Triable.
+- 🆕 **Sélecteur d'offre** dans la meta box "🎛️ Features & exceptions" : permet à l'admin de choisir ou changer l'offre du client depuis la fiche campagne (utile pour les créations manuelles).
+
+### Corrections
+- 🐛 **Fix page Commerciaux blanche** : erreur de syntaxe PHP (mix `{ }` et `: endif;`) dans `page-sales-reps.php` — la page s'affiche maintenant correctement.
+
 ## [2.3.0] — 2026-04-21
 
 ### Commerciaux & outils de vente

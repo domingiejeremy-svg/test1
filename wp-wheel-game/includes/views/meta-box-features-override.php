@@ -16,11 +16,22 @@ $all_features   = Wheel_Game_Features::registry();
 
 wp_nonce_field( 'wheel_features_override', 'wheel_features_override_nonce' );
 ?>
-<p style="margin-top:0">
-  <strong><?php esc_html_e( 'Offre actuelle :', 'wheel-game' ); ?></strong>
-  <?php echo esc_html( $offer['emoji'] . ' ' . $offer['label'] ); ?>
-  <span style="color:#999;font-size:11px">(<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . Wheel_Game_Cpt::POST_TYPE . '&page=wheel-game-features' ) ); ?>"><?php esc_html_e( 'modifier la matrice', 'wheel-game' ); ?></a>)</span>
+<p style="margin-top:0;margin-bottom:8px">
+  <label for="wheel_offer_slug" style="display:block;font-weight:700;margin-bottom:4px"><?php esc_html_e( 'Offre du client', 'wheel-game' ); ?></label>
+  <select name="wheel_offer_slug" id="wheel_offer_slug" style="width:100%;padding:6px 8px;font-size:13px">
+    <?php foreach ( Wheel_Game_Offer::all_slugs() as $slug ) :
+      $o = Wheel_Game_Offer::get( $slug ); ?>
+      <option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $offer_slug, $slug ); ?>>
+        <?php echo esc_html( $o['emoji'] . ' ' . $o['label'] ); ?>
+      </option>
+    <?php endforeach; ?>
+  </select>
+  <span style="color:#999;font-size:11px;display:block;margin-top:4px">
+    <?php esc_html_e( 'Définit le pack de features de base (voir matrice) et les quotas.', 'wheel-game' ); ?>
+    <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . Wheel_Game_Cpt::POST_TYPE . '&page=wheel-game-features' ) ); ?>"><?php esc_html_e( 'matrice', 'wheel-game' ); ?></a>
+  </span>
 </p>
+<hr style="margin:10px 0">
 
 <p style="font-size:12px;color:#666;margin-bottom:12px">
   <?php esc_html_e( 'Cette section vous permet d\'ajouter ou retirer des features spécifiquement pour ce client (sympathie, promo, SAV, etc.). Les changements s\'appliquent uniquement à cette campagne.', 'wheel-game' ); ?>
