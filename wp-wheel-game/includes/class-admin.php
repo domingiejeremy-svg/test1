@@ -28,6 +28,8 @@ class Wheel_Game_Admin {
             'manage_options', 'wheel-game-leads',     [ $this, 'render_leads_page' ] );
         add_submenu_page( $parent, __( 'Templates', 'wheel-game' ),        '📋 ' . __( 'Templates', 'wheel-game' ),
             'manage_options', 'wheel-game-templates', [ $this, 'render_templates_page' ] );
+        add_submenu_page( $parent, __( 'Commerciaux', 'wheel-game' ),      '💼 ' . __( 'Commerciaux', 'wheel-game' ),
+            'manage_options', 'wheel-game-sales',     [ $this, 'render_sales_page' ] );
         add_submenu_page( $parent, __( 'Offres & Features', 'wheel-game' ), '⚙️ ' . __( 'Offres & Features', 'wheel-game' ),
             'manage_options', 'wheel-game-features',  [ $this, 'render_features_page' ] );
         add_submenu_page( $parent, __( 'Réglages', 'wheel-game' ),         '🔧 ' . __( 'Réglages', 'wheel-game' ),
@@ -36,6 +38,10 @@ class Wheel_Game_Admin {
 
     public function render_features_page() {
         include WHEEL_GAME_DIR . 'includes/views/page-features-matrix.php';
+    }
+
+    public function render_sales_page() {
+        include WHEEL_GAME_DIR . 'includes/views/page-sales-reps.php';
     }
 
     public function register_meta_boxes() {

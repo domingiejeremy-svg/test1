@@ -1,5 +1,36 @@
 # Changelog
 
+## [2.3.0] — 2026-04-21
+
+### Commerciaux & outils de vente
+
+- 🆕 **Rôle `wheel_sales`** (Commercial BVR) — créé à l'activation, accès restreint à son espace.
+- 🆕 **Page admin `💼 Commerciaux`** (Roue des cadeaux → Commerciaux) :
+  - Créer un commercial (email → compte WP auto + mail de définition mot de passe)
+  - Assigner un **code coupon WooCommerce** existant (un coupon = un seul commercial)
+  - Définir le **% de commission** par commercial
+  - Voir ses stats : ventes totales, CA généré, commissions, activité 30j
+  - Liste des commandes attribuées avec statut
+- 🆕 **Attribution automatique des ventes** : dès qu'une commande WooCommerce utilise un coupon attribué à un commercial, elle est marquée dans les métas + commission calculée sur le sous-total HT (après remise).
+- 🆕 **Email de notification** automatique au commercial à chaque nouvelle vente (objet, montant, commission).
+- 🆕 **Espace public `/espace-commercial/`** — design premium, accessible par login WP :
+  - Dashboard : KPIs (ventes, CA, commissions, activité 30j) + code coupon en évidence
+  - Liste des ventes récentes avec statut et commission par ligne
+- 🆕 **Outil "🎯 Audit concurrentiel"** (`/espace-commercial/audit/`) :
+  - Input : Place ID prospect + 2 à 5 Place IDs concurrents
+  - Récupération temps réel via Google Places API
+  - Rapport visuel avec : carte du prospect, tableau classement, identification du leader, écarts de note et de volume d'avis
+  - Calcul automatique du "temps de rattrapage" (X mois à +1 avis/jour)
+  - Bouton "Imprimer / Enregistrer en PDF" via navigateur
+  - **Tracking background activé dès la création** de l'audit : on commence à stocker les snapshots Google dans une nouvelle table `wheel_prospect_tracking` pour avoir de l'historique pour les relances
+- 🆕 **Outil "🏆 Classement local"** (`/espace-commercial/ranking/`) — version simplifiée : affiche uniquement le rang du prospect dans son marché local avec une visu héro très punchy.
+- 🆕 **Table BDD `wheel_prospect_tracking`** — créée dynamiquement au premier audit (historique des snapshots Google des prospects, pour relances).
+
+### Amélioré
+
+- 🔄 Cache transient 1h étendu aux détails de Place ID (nom, adresse, types) pour éviter les doublons d'appel API.
+- 🔄 Menu admin réorganisé : Dashboard, Leads, Commerciaux, Templates, Offres & Features, Réglages.
+
 ## [2.2.0] — 2026-04-19
 
 ### Système de features modulaires

@@ -1,0 +1,148 @@
+/* Espace commercial — design premium */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; background: #f6f7fb; color: #1a1a2e; min-height: 100vh; padding-bottom: 60px; }
+
+/* Header */
+.sc-header { background: #1a1a2e; color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+.sc-header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 16px 24px;
+    display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+}
+.sc-brand { font-size: 1.05rem; }
+.sc-nav { display: flex; gap: 20px; flex: 1; }
+.sc-nav a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.15s; padding: 4px 0; border-bottom: 2px solid transparent; }
+.sc-nav a:hover { color: #fff; }
+.sc-nav a.is-active { color: #fff; border-bottom-color: #ffd700; }
+.sc-user { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+.sc-user a { color: #ffd700; text-decoration: none; margin-left: 10px; font-weight: 600; }
+.sc-user a:hover { text-decoration: underline; }
+
+/* Main */
+.sc-main { max-width: 1200px; margin: 0 auto; padding: 36px 24px; }
+.sc-main h1 { font-size: 2rem; margin: 0 0 24px; font-weight: 800; }
+.sc-main h2 { font-size: 1.3rem; margin: 28px 0 12px; font-weight: 700; }
+
+/* KPI grid */
+.sc-kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 24px;
+}
+.sc-kpi {
+    background: #fff; border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    border-left: 4px solid #e5e7eb;
+}
+.sc-kpi .val { font-size: 1.6rem; font-weight: 900; color: #1a1a2e; line-height: 1.1; }
+.sc-kpi .lbl { font-size: 0.78rem; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+.sc-kpi-highlight { border-left-color: #00b894; }
+.sc-kpi-highlight .val { color: #00b894; }
+
+/* Info banner */
+.sc-info {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    border-radius: 14px; padding: 18px 22px;
+    display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    margin-bottom: 30px; color: #1a1a2e;
+}
+.sc-coupon { background: #1a1a2e; color: #ffd700; padding: 4px 12px; border-radius: 6px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.95rem; font-weight: 700; margin-left: 6px; }
+
+/* Tables */
+.sc-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.sc-table th, .sc-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; }
+.sc-table thead th { background: #f8f9fb; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; font-weight: 700; }
+.sc-table .sc-comm { color: #00b894; font-weight: 700; }
+.sc-empty { background: #fff; padding: 30px; text-align: center; color: #6b7280; border-radius: 14px; }
+
+.sc-status { padding: 3px 10px; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+.sc-status-processing { background: #fef3c7; color: #92400e; }
+.sc-status-completed { background: #d1fae5; color: #065f46; }
+
+/* Audit / Ranking forms */
+.sc-audit-form { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); max-width: 720px; }
+.sc-field { margin-bottom: 16px; }
+.sc-field label { display: block; font-size: 0.78rem; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+.sc-field input, .sc-field textarea {
+    width: 100%; padding: 11px 14px;
+    border: 2px solid #e5e7eb; border-radius: 10px;
+    font-size: 0.95rem; font-family: inherit;
+    transition: border-color 0.15s;
+}
+.sc-field input:focus, .sc-field textarea:focus { outline: none; border-color: #6c5ce7; }
+.sc-field textarea { font-family: 'SF Mono', Consolas, monospace; font-size: 0.82rem; }
+
+.sc-btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 22px;
+    background: linear-gradient(135deg, #6c5ce7, #4834d4);
+    color: #fff; border: none; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 6px 16px rgba(108,92,231,0.3);
+}
+.sc-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(108,92,231,0.4); }
+.sc-btn-primary:disabled { opacity: 0.6; cursor: wait; }
+
+.sc-loading { margin-top: 14px; color: #6b7280; font-style: italic; }
+.sc-error { margin-top: 14px; color: #b91c1c; background: #fee2e2; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; }
+
+/* Report / audit result */
+.sc-report-header {
+    background: linear-gradient(135deg, #1a1a2e, #0d1b2a);
+    color: #fff; border-radius: 16px; padding: 32px 28px;
+    margin: 30px 0;
+}
+.sc-report-header h1 { color: #ffd700; font-size: 1.7rem; margin: 0 0 6px; }
+.sc-report-header p { color: rgba(255,255,255,0.75); margin: 0 0 12px; }
+.sc-report-brand { display: flex; justify-content: space-between; font-size: 0.85rem; opacity: 0.9; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 12px; }
+
+.sc-report-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin: 14px 0; }
+.sc-report-table th, .sc-report-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+.sc-report-table thead th { background: #f8f9fb; font-weight: 700; font-size: 0.8rem; color: #374151; text-transform: uppercase; letter-spacing: 0.4px; }
+.sc-report-table .is-prospect { background: #fef3c7; font-weight: 700; }
+
+.sc-rating-bar { display: inline-block; background: #f3f4f6; width: 100px; height: 8px; border-radius: 4px; overflow: hidden; margin-right: 6px; vertical-align: middle; }
+.sc-rating-bar-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+
+#audit-prospect-card { background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
+#audit-prospect-card .name { font-size: 1.2rem; font-weight: 800; }
+#audit-prospect-card .stats { display: flex; gap: 24px; margin-top: 8px; }
+#audit-prospect-card .stats div { font-size: 0.95rem; }
+#audit-prospect-card .stats strong { font-size: 1.2rem; color: #92400e; }
+
+#audit-gap { background: #fff; padding: 20px 24px; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+#audit-gap ul { margin: 8px 0 0 20px; padding: 0; }
+#audit-gap li { margin-bottom: 6px; }
+
+.sc-report-actions { margin: 24px 0; text-align: center; }
+
+.sc-report-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.8rem; }
+.sc-report-footer p { margin: 3px 0; }
+
+/* Ranking hero */
+.sc-rank-hero {
+    background: linear-gradient(135deg, #1a1a2e, #6c5ce7);
+    color: #fff; border-radius: 16px; padding: 30px 28px;
+    display: flex; align-items: center; gap: 24px; margin: 20px 0;
+}
+.sc-rank-position { font-size: 4.5rem; font-weight: 900; color: #ffd700; line-height: 1; }
+.sc-rank-hero h2 { color: #fff; margin: 0 0 4px; }
+.sc-rank-hero p { color: rgba(255,255,255,0.85); margin: 0; }
+
+/* Print mode : simplifié, noir & blanc */
+body.sc-print-mode { background: #fff; padding: 0; }
+body.sc-print-mode .sc-main { padding: 12mm 16mm; max-width: 100%; }
+body.sc-print-mode .sc-audit-form { display: none; }
+body.sc-print-mode .sc-report-actions { display: none; }
+
+@media print {
+  body { background: #fff; padding: 0; }
+  .sc-header, .sc-audit-form, .sc-report-actions { display: none !important; }
+  .sc-main { padding: 0; max-width: 100%; }
+  .sc-report-header { background: #1a1a2e !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sc-report-table, #audit-prospect-card, #audit-gap { box-shadow: none; border: 1px solid #e5e7eb; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* WP admin KPI (réutilise le style du dashboard) */
+.wg-kpi { background: #fff; border-left: 4px solid #aaa; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.wg-kpi .val { font-size: 24px; font-weight: 900; color: #1a1a2e; line-height: 1.1; }
+.wg-kpi .lbl { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }

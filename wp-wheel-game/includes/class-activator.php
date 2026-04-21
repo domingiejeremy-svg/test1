@@ -9,12 +9,16 @@ class Wheel_Game_Activator {
     public static function activate() {
         require_once WHEEL_GAME_DIR . 'includes/class-cpt.php';
         require_once WHEEL_GAME_DIR . 'includes/class-config-page.php';
+        require_once WHEEL_GAME_DIR . 'includes/class-sales-space.php';
+        require_once WHEEL_GAME_DIR . 'includes/class-sales-rep.php';
         ( new Wheel_Game_Cpt() )->register_cpt();
         ( new Wheel_Game_Config_Page() )->add_rewrite();
+        ( new Wheel_Game_Sales_Space() )->add_rewrite();
         flush_rewrite_rules();
 
         self::create_tables();
         self::create_role();
+        Wheel_Game_Sales_Rep::create_role();
         update_option( 'wheel_game_db_version', WHEEL_GAME_DB_VERSION );
 
         if ( ! wp_next_scheduled( 'wheel_daily_google_fetch' ) ) {
@@ -133,6 +137,9 @@ class Wheel_Game_Activator {
 
         if ( get_role( 'wheel_merchant' ) ) {
             remove_role( 'wheel_merchant' );
+        }
+        if ( class_exists( 'Wheel_Game_Sales_Rep' ) ) {
+            Wheel_Game_Sales_Rep::remove_role();
         }
     }
 }
