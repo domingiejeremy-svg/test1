@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.3.2] — 2026-04-21
+
+### Attribution des clients à vie
+
+- 🆕 **Assignation à vie client → commercial** : dès qu'un client utilise un coupon commercial sur sa 1ère commande, il est marqué dans son profil WP (méta `_bvr_assigned_sales_rep`). Toutes ses commandes suivantes (renouvellements d'abonnement, achats supplémentaires) **sans coupon** sont automatiquement attribuées au même commercial avec sa commission — parfait pour les modèles récurrents.
+- 🆕 **Distinction directe / renouvellement** : les commandes sont maintenant taguées (`_bvr_attribution_type`) :
+  - 🔥 **Directe** : 1ère vente (coupon utilisé)
+  - 🔁 **Renouvellement** : commande suivante auto-attribuée via l'assignation à vie
+- 🆕 **UI admin sur profil client** : nouveau bloc "💼 Commercial assigné (BVR)" dans la fiche WP d'un client, avec dropdown pour changer ou désassigner. Historique visible (date de 1ère attribution + coupon d'origine).
+- 🆕 **Email de notification enrichi** : le commercial voit le type de vente dans son email + montant + commission.
+- 🆕 **KPI "Clients à vie"** dans la page admin du commercial (nombre de clients assignés).
+- 🆕 **Colonne "Type"** dans le dashboard du commercial et le récap admin avec badges colorés Directe/Renouvellement.
+
 ## [2.3.1] — 2026-04-21
 
 ### Ajouts

@@ -85,7 +85,9 @@ if ( $action === 'edit' && $edit_id ) :
     <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . Wheel_Game_Cpt::POST_TYPE . '&page=wheel-game-sales' ) ); ?>" class="page-title-action">↩ Retour</a>
   </h1>
 
+  <?php $customer_count = Wheel_Game_Sales_Rep::customers_count( $rep->ID ); ?>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:20px 0">
+    <div class="wg-kpi" style="border-left:4px solid #6c5ce7"><div class="val"><?php echo (int) $customer_count; ?></div><div class="lbl">Clients à vie</div></div>
     <div class="wg-kpi"><div class="val"><?php echo (int) $stats['total_orders']; ?></div><div class="lbl">Ventes totales</div></div>
     <div class="wg-kpi"><div class="val"><?php echo wc_price( $stats['total_revenue'] ); ?></div><div class="lbl">CA généré</div></div>
     <div class="wg-kpi" style="border-left:4px solid #00b894"><div class="val"><?php echo wc_price( $stats['total_commission'] ); ?></div><div class="lbl">Commissions totales</div></div>

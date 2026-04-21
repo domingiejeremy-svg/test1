@@ -60,15 +60,23 @@ if ( ! defined( 'ABSPATH' ) ) exit;
   <?php else : ?>
     <table class="sc-table">
       <thead><tr>
-        <th>Date</th><th>Commande</th><th>Client</th><th>Montant HT</th><th>Commission</th><th>Statut</th>
+        <th>Date</th><th>Commande</th><th>Type</th><th>Client</th><th>Montant HT</th><th>Commission</th><th>Statut</th>
       </tr></thead>
       <tbody>
       <?php foreach ( $orders as $o ) :
         $amt  = (float) $o->get_subtotal() - (float) $o->get_total_discount();
-        $comm = (float) $o->get_meta( Wheel_Game_Sales_Rep::ORDER_META_COMMISSION ); ?>
+        $comm = (float) $o->get_meta( Wheel_Game_Sales_Rep::ORDER_META_COMMISSION );
+        $type = $o->get_meta( Wheel_Game_Sales_Rep::ORDER_META_ATTRIBUTION_TYPE ) ?: 'direct'; ?>
       <tr>
         <td><?php echo esc_html( $o->get_date_created()->format( 'd/m/Y' ) ); ?></td>
         <td>#<?php echo esc_html( $o->get_order_number() ); ?></td>
+        <td>
+          <?php if ( $type === 'lifetime' ) : ?>
+            <span class="sc-tag sc-tag-renew">🔁 Renouvellement</span>
+          <?php else : ?>
+            <span class="sc-tag sc-tag-direct">🔥 Directe</span>
+          <?php endif; ?>
+        </td>
         <td><?php echo esc_html( $o->get_formatted_billing_full_name() ); ?></td>
         <td><?php echo wc_price( $amt ); ?></td>
         <td class="sc-comm"><?php echo wc_price( $comm ); ?></td>

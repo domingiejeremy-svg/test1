@@ -3,7 +3,7 @@
  * Plugin Name:       Wheel Game — Roue des cadeaux
  * Plugin URI:        https://boostezvotrereputation.fr
  * Description:       Plateforme de jeux de roue pour collecter leads et avis Google. Chaque campagne a son URL, ses prix, son suivi, ses quotas.
- * Version:           2.3.1
+ * Version:           2.3.2
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            Boostez Votre Réputation
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'WHEEL_GAME_VERSION',    '2.3.1' );
+define( 'WHEEL_GAME_VERSION',    '2.3.2' );
 define( 'WHEEL_GAME_DB_VERSION', '2.0' );
 define( 'WHEEL_GAME_FILE',       __FILE__ );
 define( 'WHEEL_GAME_DIR',        plugin_dir_path( __FILE__ ) );
