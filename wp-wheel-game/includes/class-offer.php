@@ -1,51 +1,36 @@
 <?php
 /**
- * Helper offres (Starter / Booster / All Inclusive).
- * Règles de quotas, features, libellés.
+ * Helper offres (Starter / Booster / Premium).
+ * Les features sont gérées par Wheel_Game_Features — cette classe ne gère que
+ * l'identité de l'offre, son libellé, et le compteur de modifications.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Wheel_Game_Offer {
 
-    const STARTER       = 'starter';
-    const BOOSTER       = 'booster';
-    const ALL_INCLUSIVE = 'all_inclusive';
+    const STARTER = 'starter';
+    const BOOSTER = 'booster';
+    const PREMIUM = 'premium';
 
-    /**
-     * Règles par offre : quota modifs/an, quota tirages/mois, features.
-     */
-    public static function rules() {
+    // Compat : ancienne constante
+    const ALL_INCLUSIVE = 'premium';
+
+    public static function labels() {
         return [
-            self::STARTER => [
-                'label'            => __( 'Starter', 'wheel-game' ),
-                'emoji'            => '🥉',
-                'mods_per_year'    => 1,
-                'plays_per_month'  => 500,
-                'features'         => [ 'basic_stats' ],
-            ],
-            self::BOOSTER => [
-                'label'            => __( 'Booster', 'wheel-game' ),
-                'emoji'            => '🥈',
-                'mods_per_year'    => 5,
-                'plays_per_month'  => 2000,
-                'features'         => [ 'basic_stats', 'advanced_stats', 'lead_capture', 'monthly_report' ],
-            ],
-            self::ALL_INCLUSIVE => [
-                'label'            => __( 'All Inclusive', 'wheel-game' ),
-                'emoji'            => '🥇',
-                'mods_per_year'    => -1, // illimité
-                'plays_per_month'  => -1, // illimité
-                'features'         => [ 'basic_stats', 'advanced_stats', 'lead_capture', 'monthly_report', 'review_alerts', 'seasonal_wheels', 'mailchimp_sync', 'shared_dashboard' ],
-            ],
+            self::STARTER => [ 'label' => __( 'Starter', 'wheel-game' ), 'emoji' => '🥉' ],
+            self::BOOSTER => [ 'label' => __( 'Booster', 'wheel-game' ), 'emoji' => '🥈' ],
+            self::PREMIUM => [ 'label' => __( 'Premium', 'wheel-game' ), 'emoji' => '🥇' ],
         ];
     }
 
     public static function all_slugs() {
-        return array_keys( self::rules() );
+        return array_keys( self::labels() );
     }
 
     public static function get( $slug ) {
-        return self::rules()[ $slug ] ?? self::rules()[ self::STARTER ];
+        // Migration douce : "all_inclusive" → "premium"
+        if ( $slug === 'all_inclusive' ) $slug = self::PREMIUM;
+        return self::labels()[ $slug ] ?? self::labels()[ self::STARTER ];
     }
 
     public static function label( $slug ) {
@@ -54,13 +39,19 @@ class Wheel_Game_Offer {
     }
 
     /**
-     * Offre d'une campagne (stockée en méta).
+     * Offre d'une campagne (migration auto all_inclusive → premium).
      */
     public static function for_campaign( $campaign_id ) {
-        return get_post_meta( $campaign_id, '_wheel_offer', true ) ?: self::STARTER;
+        $slug = get_post_meta( $campaign_id, '_wheel_offer', true ) ?: self::STARTER;
+        if ( $slug === 'all_inclusive' ) {
+            $slug = self::PREMIUM;
+            update_post_meta( $campaign_id, '_wheel_offer', $slug );
+        }
+        return $slug;
     }
 
     public static function set_for_campaign( $campaign_id, $slug ) {
+        if ( $slug === 'all_inclusive' ) $slug = self::PREMIUM;
         if ( ! in_array( $slug, self::all_slugs(), true ) ) $slug = self::STARTER;
         update_post_meta( $campaign_id, '_wheel_offer', $slug );
     }
@@ -73,10 +64,10 @@ class Wheel_Game_Offer {
     }
 
     public static function mods_remaining( $campaign_id ) {
-        $offer = self::get( self::for_campaign( $campaign_id ) );
-        if ( $offer['mods_per_year'] === -1 ) return -1; // illimité
+        $max = Wheel_Game_Features::mods_per_year( $campaign_id );
+        if ( $max === -1 ) return -1;
         $used = self::mods_used( $campaign_id );
-        return max( 0, $offer['mods_per_year'] - $used );
+        return max( 0, $max - $used );
     }
 
     public static function increment_mods( $campaign_id ) {
@@ -86,33 +77,27 @@ class Wheel_Game_Offer {
     }
 
     public static function can_modify( $campaign_id ) {
-        $offer = self::get( self::for_campaign( $campaign_id ) );
-        if ( $offer['mods_per_year'] === -1 ) return true;
-        return self::mods_used( $campaign_id ) < $offer['mods_per_year'];
-    }
-
-    /**
-     * Vérifie si une feature est disponible pour l'offre.
-     */
-    public static function has_feature( $campaign_id, $feature ) {
-        $offer = self::get( self::for_campaign( $campaign_id ) );
-        return in_array( $feature, $offer['features'], true );
+        $max = Wheel_Game_Features::mods_per_year( $campaign_id );
+        if ( $max === -1 ) return true;
+        return self::mods_used( $campaign_id ) < $max;
     }
 
     /**
      * Détermine l'offre à partir d'une commande WooCommerce.
-     * Si plusieurs produits avec offres différentes → prend la "meilleure".
+     * Si plusieurs produits avec offres → prend la meilleure.
      */
     public static function from_wc_order( $order ) {
         if ( ! $order || ! is_object( $order ) ) return self::STARTER;
 
-        $priority = [ self::ALL_INCLUSIVE => 3, self::BOOSTER => 2, self::STARTER => 1 ];
+        $priority = [ self::PREMIUM => 3, self::BOOSTER => 2, self::STARTER => 1 ];
         $best = self::STARTER;
         $best_rank = 1;
 
         foreach ( $order->get_items() as $item ) {
             $product_id = $item->get_product_id();
             $offer = get_post_meta( $product_id, '_bvr_offer', true );
+            // Migration : all_inclusive → premium
+            if ( $offer === 'all_inclusive' ) $offer = self::PREMIUM;
             if ( ! $offer || ! isset( $priority[ $offer ] ) ) continue;
             if ( $priority[ $offer ] > $best_rank ) {
                 $best = $offer;

@@ -66,6 +66,27 @@ class Wheel_Game_Campaign {
         $config['quota_reached'] = $quota_max > 0 && $plays_count >= $quota_max;
         $config['available']     = $config['active'] && ! $config['expired'] && ! $config['quota_reached'];
 
+        // Features effectives (via registre)
+        if ( class_exists( 'Wheel_Game_Features' ) ) {
+            $active_features = Wheel_Game_Features::for_campaign( $post_id );
+            $config['features']  = $active_features;
+            $config['has_lead']  = in_array( 'lead_capture',             $active_features, true );
+            $config['has_google_tracking'] = in_array( 'google_reviews_tracking', $active_features, true );
+            $config['has_monthly_report']  = in_array( 'monthly_report',  $active_features, true );
+            $config['has_conversion_opt']  = in_array( 'conversion_optimization', $active_features, true );
+
+            // Surcharge lead_required par la feature : si pas de feature lead_capture → jamais de form
+            if ( ! $config['has_lead'] ) {
+                $config['lead_required'] = false;
+            }
+        } else {
+            $config['features'] = [];
+            $config['has_lead'] = $config['lead_required'];
+            $config['has_google_tracking'] = true;
+            $config['has_monthly_report']  = false;
+            $config['has_conversion_opt']  = true;
+        }
+
         return $config;
     }
 

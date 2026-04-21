@@ -28,8 +28,14 @@ class Wheel_Game_Admin {
             'manage_options', 'wheel-game-leads',     [ $this, 'render_leads_page' ] );
         add_submenu_page( $parent, __( 'Templates', 'wheel-game' ),        '📋 ' . __( 'Templates', 'wheel-game' ),
             'manage_options', 'wheel-game-templates', [ $this, 'render_templates_page' ] );
-        add_submenu_page( $parent, __( 'Réglages', 'wheel-game' ),         '⚙️ ' . __( 'Réglages', 'wheel-game' ),
+        add_submenu_page( $parent, __( 'Offres & Features', 'wheel-game' ), '⚙️ ' . __( 'Offres & Features', 'wheel-game' ),
+            'manage_options', 'wheel-game-features',  [ $this, 'render_features_page' ] );
+        add_submenu_page( $parent, __( 'Réglages', 'wheel-game' ),         '🔧 ' . __( 'Réglages', 'wheel-game' ),
             'manage_options', 'wheel-game-settings',  [ $this, 'render_settings_page' ] );
+    }
+
+    public function render_features_page() {
+        include WHEEL_GAME_DIR . 'includes/views/page-features-matrix.php';
     }
 
     public function register_meta_boxes() {
@@ -39,6 +45,16 @@ class Wheel_Game_Admin {
             [ $this, 'render_sidebar_box' ],  Wheel_Game_Cpt::POST_TYPE, 'side', 'default' );
         add_meta_box( 'wheel_google',  '📈 ' . __( 'Suivi avis Google', 'wheel-game' ),
             [ $this, 'render_google_box' ],   Wheel_Game_Cpt::POST_TYPE, 'side', 'default' );
+
+        if ( current_user_can( 'manage_options' ) ) {
+            add_meta_box( 'wheel_features_override', '🎛️ ' . __( 'Features & exceptions', 'wheel-game' ),
+                [ $this, 'render_features_override_box' ], Wheel_Game_Cpt::POST_TYPE, 'side', 'default' );
+        }
+    }
+
+    public function render_features_override_box( $post ) {
+        $c = Wheel_Game_Campaign::get( $post->ID );
+        include WHEEL_GAME_DIR . 'includes/views/meta-box-features-override.php';
     }
 
     public function render_tabs_box( $post ) {
@@ -135,6 +151,24 @@ class Wheel_Game_Admin {
         if ( isset( $_POST['google_api_key'] ) ) {
             $key = sanitize_text_field( wp_unslash( $_POST['google_api_key'] ) );
             if ( $key !== '' ) update_option( 'wheel_game_google_api_key', $key );
+        }
+
+        // Overrides features (admin only)
+        if ( current_user_can( 'manage_options' )
+            && isset( $_POST['wheel_features_override_nonce'] )
+            && wp_verify_nonce( $_POST['wheel_features_override_nonce'], 'wheel_features_override' )
+            && isset( $_POST['feat_override'] ) ) {
+            $extra   = [];
+            $removed = [];
+            foreach ( (array) $_POST['feat_override'] as $slug => $action ) {
+                $slug   = sanitize_key( $slug );
+                $action = sanitize_key( $action );
+                if ( ! isset( Wheel_Game_Features::registry()[ $slug ] ) ) continue;
+                if ( $action === 'add' )    $extra[]   = $slug;
+                if ( $action === 'remove' ) $removed[] = $slug;
+            }
+            update_post_meta( $post_id, '_wheel_features_extra',   $extra );
+            update_post_meta( $post_id, '_wheel_features_removed', $removed );
         }
 
         do_action( 'wheel_game_after_save_campaign', $post_id );

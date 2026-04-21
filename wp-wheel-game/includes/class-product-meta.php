@@ -15,10 +15,10 @@ class Wheel_Game_Product_Meta {
 
     public function render_field() {
         $options = [
-            ''                              => __( '— Aucune offre BVR —', 'wheel-game' ),
-            Wheel_Game_Offer::STARTER       => '🥉 Starter',
-            Wheel_Game_Offer::BOOSTER       => '🥈 Booster',
-            Wheel_Game_Offer::ALL_INCLUSIVE => '🥇 All Inclusive',
+            ''                        => __( '— Aucune offre BVR —', 'wheel-game' ),
+            Wheel_Game_Offer::STARTER => '🥉 Starter',
+            Wheel_Game_Offer::BOOSTER => '🥈 Booster',
+            Wheel_Game_Offer::PREMIUM => '🥇 Premium',
         ];
 
         global $post;
@@ -38,6 +38,8 @@ class Wheel_Game_Product_Meta {
 
     public function save_field( $post_id ) {
         $val = isset( $_POST[ self::META_KEY ] ) ? sanitize_key( wp_unslash( $_POST[ self::META_KEY ] ) ) : '';
+        // Migration : all_inclusive → premium
+        if ( $val === 'all_inclusive' ) $val = Wheel_Game_Offer::PREMIUM;
         if ( $val && ! in_array( $val, Wheel_Game_Offer::all_slugs(), true ) ) {
             $val = '';
         }

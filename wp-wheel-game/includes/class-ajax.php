@@ -34,6 +34,7 @@ class Wheel_Game_Ajax {
 
         $c = Wheel_Game_Campaign::get( $campaign_id );
         if ( ! $c['available'] ) wp_send_json_error( __( 'Cette campagne n\'est plus disponible', 'wheel-game' ) );
+        if ( empty( $c['has_lead'] ) ) wp_send_json_error( __( 'Capture de lead non activée sur cette offre', 'wheel-game' ) );
 
         $data = [
             'first_name' => sanitize_text_field( wp_unslash( $_POST['first_name'] ?? '' ) ),

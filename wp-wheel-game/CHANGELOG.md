@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.2.0] — 2026-04-19
+
+### Système de features modulaires
+
+- 🆕 **Registre centralisé des features** (`Wheel_Game_Features`) : `wheel_creation`, `qr_code`, `mods_1/5/unlimited_per_year`, `google_reviews_tracking`, `lead_capture`, `monthly_report`, `conversion_optimization`.
+- 🆕 **Page admin "⚙️ Offres & Features"** : matrice cochable offres × features. Active/désactive n'importe quelle feature pour n'importe quelle offre sans toucher au code. Gestion automatique de l'exclusivité entre `mods_1`, `mods_5`, `mods_unlimited`.
+- 🆕 **Exceptions par client** : meta box "🎛️ Features & exceptions" sur chaque fiche campagne (admin only). Ajouter ou retirer une feature pour un client spécifique (ex: offrir la capture lead à un client Starter par sympathie).
+- 🆕 **Gating dynamique** : tous les checks de features utilisent désormais le registre (`Wheel_Game_Features::has()`). La modification de la matrice s'applique instantanément.
+- 🔄 **Renommage "All Inclusive" → "Premium"** partout (avec migration automatique des anciennes campagnes).
+- 🔄 **Capture de lead** conditionnée par la feature `lead_capture` : si désactivée sur une offre, le formulaire ne s'affiche plus et l'endpoint AJAX bloque la soumission côté serveur.
+- 🔄 **Quota de modifs** piloté par les features `mods_1_per_year`, `mods_5_per_year`, `mods_unlimited` (mutuellement exclusives).
+
+### Corrections
+
+- 🐛 Migration auto du slug `all_inclusive` → `premium` pour les campagnes et produits existants.
+
 ## [2.1.0] — 2026-04-18
 
 ### Onboarding client automatisé
