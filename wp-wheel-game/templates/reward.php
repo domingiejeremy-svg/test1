@@ -265,6 +265,39 @@ $blog_name  = get_bloginfo( 'name' );
       animation: btn-in 0.5s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
 
+    .google-btn.auto-opened {
+      animation: btn-in 0.5s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+                 pulse-btn 1.4s 2s ease-in-out 3;
+    }
+
+    .google-btn.popup-blocked {
+      animation: btn-in 0.5s 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+                 pulse-btn 1.4s 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-btn {
+      0%, 100% { box-shadow: 0 8px 32px rgba(255,215,0,0.4); transform: scale(1); }
+      50%       { box-shadow: 0 12px 48px rgba(255,215,0,0.85); transform: scale(1.03); }
+    }
+
+    .popup-blocked-msg {
+      display: none;
+      margin-top: 10px;
+      padding: 9px 14px;
+      background: rgba(255,215,0,0.12);
+      border: 1px solid rgba(255,215,0,0.35);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      animation: fade-in-msg 0.4s ease forwards;
+    }
+
+    @keyframes fade-in-msg {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
     @keyframes btn-in {
       from { transform: translateY(20px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
@@ -388,7 +421,7 @@ $wheel_url_rw = get_permalink( $campaign_id );
         </div>
       </div>
 
-      <a href="<?php echo esc_url( $google_url ); ?>" class="google-btn" target="_blank" rel="noopener">
+      <a href="<?php echo esc_url( $google_url ); ?>" class="google-btn" id="googleBtn" target="_blank" rel="noopener">
         <svg class="google-logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -397,9 +430,13 @@ $wheel_url_rw = get_permalink( $campaign_id );
         </svg>
         <div class="btn-text">
           <span class="main"><?php echo esc_html( $r_bm ); ?></span>
-          <span class="sub"><?php echo esc_html( $r_bs ); ?></span>
+          <span class="sub" id="googleBtnSub"><?php echo esc_html( $r_bs ); ?></span>
         </div>
       </a>
+
+      <div class="popup-blocked-msg" id="popupBlockedMsg">
+        👆 Votre navigateur a bloqué l'ouverture automatique — appuyez sur le bouton ci-dessus
+      </div>
 
       <div class="urgency-note">
         <?php echo esc_html( $r_urg ); ?>
@@ -412,5 +449,32 @@ $wheel_url_rw = get_permalink( $campaign_id );
   </p>
 </div>
 
+<script>
+(function () {
+    var googleUrl  = <?php echo wp_json_encode( $google_url ); ?>;
+    var isAdmin    = <?php echo wp_json_encode( $is_admin_rw ); ?>;
+
+    // Ne pas ouvrir si URL non configurée ou si aperçu admin (trop intrusif pour les tests)
+    if (!googleUrl || googleUrl === '#' || isAdmin) return;
+
+    var btn        = document.getElementById('googleBtn');
+    var blockedMsg = document.getElementById('popupBlockedMsg');
+    var btnSub     = document.getElementById('googleBtnSub');
+
+    setTimeout(function () {
+        var win = window.open(googleUrl, '_blank', 'noopener,noreferrer');
+
+        if (win && !win.closed) {
+            // Ouverture réussie
+            btn.classList.add('auto-opened');
+            btnSub.textContent = 'Ouvert dans un nouvel onglet ✓';
+        } else {
+            // Popup bloqué → attirer l'attention sur le bouton
+            btn.classList.add('popup-blocked');
+            blockedMsg.style.display = 'block';
+        }
+    }, 2000);
+})();
+</script>
 </body>
 </html>
