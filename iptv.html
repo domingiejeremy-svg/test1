@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lecteur IPTV</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.js"></script>
+<style>
+  :root{
+    --bg:#0d1017; --panel:#151a23; --panel2:#1c2230; --line:#252c3a;
+    --text:#e7ecf3; --muted:#8b97a8; --accent:#ffb703; --accent2:#3aa0ff;
+    --danger:#ff5c5c; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  button{font:inherit;cursor:pointer}
+  input,select{font:inherit}
+
+  /* ---------- Login ---------- */
+  #login{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .card h1{margin:0 0 4px;font-size:22px}
+  .card p.sub{margin:0 0 20px;color:var(--muted);font-size:13px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+  .field input{width:100%;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:10px;color:var(--text);outline:none}
+  .field input:focus{border-color:var(--accent2)}
+  .row{display:flex;gap:12px}
+  .row .field{flex:1}
+  .btn{width:100%;padding:12px;border:none;border-radius:10px;background:var(--accent);
+    color:#141414;font-weight:600;margin-top:6px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .muted-btn{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .note{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
+  .err{background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.4);color:#ffb3b3;
+    padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none}
+  details.adv{margin-top:6px}
+  details.adv summary{color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:10px}
+
+  /* ---------- App ---------- */
+  #app{display:none;height:100vh;grid-template-columns:300px 1fr;grid-template-rows:56px 1fr}
+  header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 16px;
+    background:var(--panel);border-bottom:1px solid var(--line)}
+  header .brand{font-weight:700;color:var(--accent)}
+  header .tabs{display:flex;gap:4px}
+  header .tab{padding:7px 14px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--muted)}
+  header .tab.active{background:var(--panel2);color:var(--text);border-color:var(--line)}
+  header .spacer{flex:1}
+  header .acct{font-size:12px;color:var(--muted)}
+  header .logout{padding:6px 12px;border-radius:8px;background:transparent;border:1px solid var(--line);color:var(--muted)}
+
+  aside{background:var(--panel);border-right:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column}
+  .search{padding:10px;border-bottom:1px solid var(--line)}
+  .search input{width:100%;padding:9px 11px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:9px;color:var(--text);outline:none}
+  .cats{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-bottom:1px solid var(--line);max-height:150px;overflow:auto}
+  .cat{padding:5px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);
+    color:var(--muted);font-size:12px}
+  .cat.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .list{flex:1;overflow:auto}
+  .item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer}
+  .item:hover{background:var(--panel2)}
+  .item.active{background:var(--panel2);box-shadow:inset 3px 0 0 var(--accent)}
+  .item img{width:34px;height:34px;object-fit:contain;border-radius:6px;background:#000;flex:none}
+  .item .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+  .item .fav{color:var(--muted);opacity:.5}
+  .item .fav.on{color:var(--accent);opacity:1}
+  .empty{padding:30px 16px;color:var(--muted);text-align:center;font-size:13px}
+
+  main{background:#000;display:flex;flex-direction:column;overflow:hidden}
+  .videowrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:#000}
+  video{width:100%;height:100%;background:#000}
+  .placeholder{position:absolute;color:var(--muted);text-align:center;font-size:14px;padding:20px}
+  .nowplaying{padding:10px 16px;background:var(--panel);border-top:1px solid var(--line);
+    display:flex;align-items:center;gap:12px;min-height:48px}
+  .nowplaying .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status{font-size:12px;color:var(--muted)}
+  .spinner{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%;animation:spin .8s linear infinite;display:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading .spinner{display:block}
+  @media(max-width:720px){
+    #app{grid-template-columns:1fr;grid-template-rows:56px 40vh 1fr}
+    aside{grid-row:3}main{grid-row:2}
+    header .acct{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="login">
+  <form class="card" id="loginForm">
+    <h1>📺 Lecteur IPTV</h1>
+    <p class="sub">Entre les identifiants de ton abonnement (Xtream Codes).</p>
+    <div class="err" id="loginErr"></div>
+    <div class="field">
+      <label>URL du serveur</label>
+      <input id="host" placeholder="http://exemple.com:8080" autocomplete="off" required>
+    </div>
+    <div class="row">
+      <div class="field"><label>Utilisateur</label><input id="user" autocomplete="off" required></div>
+      <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="off" required></div>
+    </div>
+    <details class="adv">
+      <summary>Options avancées (proxy CORS)</summary>
+      <div class="field">
+        <label>Préfixe proxy (optionnel)</label>
+        <input id="proxy" placeholder="http://localhost:8787/" autocomplete="off">
+        <div class="note" style="margin-top:8px">
+          Si la connexion échoue avec une erreur réseau, ton serveur bloque le CORS.
+          Lance le proxy fourni (<code>iptv-proxy.js</code>) et mets son adresse ici.
+        </div>
+      </div>
+    </details>
+    <label style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:6px 0">
+      <input type="checkbox" id="remember" checked> Se souvenir de moi sur cet appareil
+    </label>
+    <button class="btn" type="submit" id="loginBtn">Se connecter</button>
+    <div class="note">
+      Les identifiants restent dans ton navigateur (localStorage) et ne sont envoyés qu'à ton serveur IPTV.
+    </div>
+  </form>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="app">
+  <header>
+    <span class="brand">📺 IPTV</span>
+    <div class="tabs">
+      <button class="tab active" data-type="live">Chaînes</button>
+      <button class="tab" data-type="vod">Films</button>
+      <button class="tab" data-type="series">Séries</button>
+      <button class="tab" data-type="fav">★ Favoris</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="acct" id="acct"></span>
+    <button class="logout" id="logout">Déconnexion</button>
+  </header>
+
+  <aside>
+    <div class="search"><input id="search" placeholder="Rechercher…"></div>
+    <div class="cats" id="cats"></div>
+    <div class="list" id="list"><div class="empty">Chargement…</div></div>
+  </aside>
+
+  <main>
+    <div class="videowrap">
+      <video id="video" controls playsinline></video>
+      <div class="placeholder" id="placeholder">Sélectionne une chaîne pour commencer ▶</div>
+    </div>
+    <div class="nowplaying">
+      <div class="spinner" id="spin"></div>
+      <div class="t" id="npTitle">—</div>
+      <div class="status" id="status"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const LS = "iptv_creds";
+
+/* ---------------- State ---------------- */
+let cfg = null;                 // {host,user,pass,proxy}
+let hls = null, mpeg = null;
+let current = { type:"live", catId:"all", items:[], cats:[], catsLoaded:{} };
+let favs = JSON.parse(localStorage.getItem("iptv_favs") || "[]");
+
+/* ---------------- Helpers ---------------- */
+function api(params){
+  const base = cfg.host.replace(/\/+$/,"");
+  const q = new URLSearchParams({username:cfg.user,password:cfg.pass,...params});
+  const url = `${base}/player_api.php?${q}`;
+  return prox(url);
+}
+function prox(url){ return cfg.proxy ? cfg.proxy.replace(/\/+$/,"")+"/"+url : url; }
+function streamUrl(type, id, ext){
+  const base = cfg.host.replace(/\/+$/,"");
+  const seg = type==="live" ? "live" : type==="vod" ? "movie" : "series";
+  return `${base}/${seg}/${encodeURIComponent(cfg.user)}/${encodeURIComponent(cfg.pass)}/${id}.${ext}`;
+}
+async function getJSON(params){
+  const r = await fetch(api(params), {cache:"no-store"});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+const favKey = it => `${current.type}:${it.stream_id||it.series_id}`;
+function isFav(it){ return favs.includes(favKey(it)); }
+function toggleFav(it){
+  const k = favKey(it);
+  const i = favs.indexOf(k);
+  if(i>=0) favs.splice(i,1); else favs.push(k);
+  localStorage.setItem("iptv_favs", JSON.stringify(favs));
+}
+
+/* ---------------- Login ---------------- */
+$("#loginForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const btn=$("#loginBtn"), err=$("#loginErr");
+  err.style.display="none";
+  btn.disabled=true; btn.textContent="Connexion…";
+  let host=$("#host").value.trim();
+  if(!/^https?:\/\//i.test(host)) host="http://"+host;
+  cfg={host, user:$("#user").value.trim(), pass:$("#pass").value, proxy:$("#proxy").value.trim()};
+  try{
+    const info = await getJSON({});
+    if(!info || !info.user_info || info.user_info.auth===0)
+      throw new Error("Identifiants refusés par le serveur.");
+    if($("#remember").checked) localStorage.setItem(LS, JSON.stringify(cfg));
+    startApp(info);
+  }catch(ex){
+    err.textContent = ex.message.includes("Failed to fetch")
+      ? "Échec réseau : le serveur bloque probablement le CORS. Active un proxy dans les options avancées."
+      : "Connexion impossible : "+ex.message;
+    err.style.display="block";
+    btn.disabled=false; btn.textContent="Se connecter";
+  }
+});
+
+/* ---------------- App boot ---------------- */
+function startApp(info){
+  $("#login").style.display="none";
+  $("#app").style.display="grid";
+  const u=info.user_info||{};
+  const exp = u.exp_date ? new Date(u.exp_date*1000).toLocaleDateString("fr-FR") : "—";
+  $("#acct").textContent = `${u.username||cfg.user} · expire le ${exp} · ${u.active_cons||0}/${u.max_connections||"?"} flux`;
+  switchType("live");
+}
+
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    switchType(t.dataset.type);
+  });
+});
+
+async function switchType(type){
+  current.type=type; current.catId="all"; $("#search").value="";
+  $("#cats").innerHTML=""; $("#list").innerHTML='<div class="empty">Chargement…</div>';
+  if(type==="fav"){ renderCats([]); loadFavs(); return; }
+  try{
+    const actionCats = type==="live"?"get_live_categories":type==="vod"?"get_vod_categories":"get_series_categories";
+    const cats = await getJSON({action:actionCats});
+    current.cats = Array.isArray(cats)?cats:[];
+    renderCats(current.cats);
+    loadCategory("all");
+  }catch(ex){
+    $("#list").innerHTML=`<div class="empty">Erreur de chargement.<br>${ex.message}</div>`;
+  }
+}
+
+function renderCats(cats){
+  const box=$("#cats"); box.innerHTML="";
+  const mk=(id,name)=>{
+    const b=document.createElement("button");
+    b.className="cat"+(id===current.catId?" active":""); b.textContent=name; b.dataset.id=id;
+    b.onclick=()=>{current.catId=id;document.querySelectorAll(".cat").forEach(c=>c.classList.toggle("active",c.dataset.id===id));loadCategory(id);};
+    box.appendChild(b);
+  };
+  if(current.type!=="fav") mk("all","Tout");
+  cats.forEach(c=>mk(c.category_id, c.category_name));
+}
+
+async function loadCategory(catId){
+  if(current.type==="fav"){ loadFavs(); return; }
+  $("#list").innerHTML='<div class="empty">Chargement…</div>';
+  try{
+    const action = current.type==="live"?"get_live_streams":current.type==="vod"?"get_vod_streams":"get_series";
+    const params = {action};
+    if(catId!=="all") params.category_id=catId;
+    const items = await getJSON(params);
+    current.items = Array.isArray(items)?items:[];
+    renderList();
+  }catch(ex){
+    $("#list").innerHTML=`<div class="empty">Erreur : ${ex.message}</div>`;
+  }
+}
+
+function loadFavs(){
+  // Favorites reference ids across types; we only have current cached items,
+  // so favorites work best within the type you saved them from. Show all cached.
+  current.items = [];
+  $("#list").innerHTML='<div class="empty">Les favoris s\'affichent depuis chaque onglet (★ sur une chaîne).<br>Ouvre "Chaînes", "Films" ou "Séries" et repère les étoiles allumées.</div>';
+}
+
+function renderList(){
+  const q=$("#search").value.trim().toLowerCase();
+  const list=$("#list"); list.innerHTML="";
+  const items=current.items.filter(it=>{
+    const nm=(it.name||"").toLowerCase();
+    return !q || nm.includes(q);
+  });
+  if(!items.length){ list.innerHTML='<div class="empty">Aucun résultat.</div>'; return; }
+  const frag=document.createDocumentFragment();
+  items.slice(0,2000).forEach(it=>{
+    const row=document.createElement("div");
+    row.className="item";
+    const logo=it.stream_icon||it.cover||"";
+    row.innerHTML=`
+      <img src="${logo}" onerror="this.style.visibility='hidden'" alt="">
+      <span class="nm">${(it.name||"Sans nom").replace(/</g,"&lt;")}</span>
+      <span class="fav ${isFav(it)?"on":""}">★</span>`;
+    row.querySelector(".fav").onclick=e=>{e.stopPropagation();toggleFav(it);e.target.classList.toggle("on");};
+    row.onclick=()=>{document.querySelectorAll(".item").forEach(i=>i.classList.remove("active"));row.classList.add("active");play(it);};
+    frag.appendChild(row);
+  });
+  list.appendChild(frag);
+}
+
+$("#search").addEventListener("input",()=>{ if(current.type!=="fav") renderList(); });
+
+/* ---------------- Playback ---------------- */
+function destroyPlayers(){
+  if(hls){hls.destroy();hls=null;}
+  if(mpeg){try{mpeg.destroy();}catch(e){}mpeg=null;}
+}
+function setStatus(s){ $("#status").textContent=s||""; }
+function loading(on){ $(".nowplaying").classList.toggle("loading",on); }
+
+async function play(it){
+  destroyPlayers();
+  const v=$("#video"); $("#placeholder").style.display="none";
+  $("#npTitle").textContent=it.name||"Lecture";
+  loading(true); setStatus("Ouverture…");
+
+  const type=current.type;
+  let src, ext;
+  if(type==="series"){
+    // Series need an episode lookup; play first available episode.
+    try{
+      const info=await getJSON({action:"get_series_info",series_id:it.series_id});
+      const seasons=info.episodes||{};
+      const firstSeason=Object.keys(seasons)[0];
+      const ep=firstSeason && seasons[firstSeason] && seasons[firstSeason][0];
+      if(!ep){ setStatus("Aucun épisode trouvé."); loading(false); return; }
+      $("#npTitle").textContent=`${it.name} · ${ep.title||"Ép. 1"}`;
+      ext=ep.container_extension||"mp4";
+      src=streamUrl("series", ep.id, ext);
+    }catch(ex){ setStatus("Erreur série : "+ex.message); loading(false); return; }
+  } else if(type==="vod"){
+    ext=it.container_extension||"mp4";
+    src=streamUrl("vod", it.stream_id, ext);
+  } else {
+    ext="m3u8";
+    src=streamUrl("live", it.stream_id, "m3u8");
+  }
+  startPlayback(src, ext, it);
+}
+
+function startPlayback(src, ext, it){
+  const v=$("#video");
+  const proxied = prox(src);
+
+  // MP4 / direct containers → native player
+  if(ext==="mp4"||ext==="mkv"||ext==="avi"){
+    v.src=proxied; v.play().catch(()=>{});
+    v.onplaying=()=>{loading(false);setStatus("Lecture");};
+    v.onerror=()=>{loading(false);setStatus("Format non lisible par le navigateur ("+ext+").");};
+    return;
+  }
+
+  // HLS (.m3u8)
+  if(ext==="m3u8"){
+    if(v.canPlayType("application/vnd.apple.mpegurl")){ // Safari native
+      v.src=proxied; v.play().catch(()=>{});
+      v.onplaying=()=>{loading(false);setStatus("Lecture");};
+      v.onerror=()=>tryTs(it);
+      return;
+    }
+    if(window.Hls && Hls.isSupported()){
+      hls=new Hls({maxBufferLength:20});
+      hls.loadSource(proxied);
+      hls.attachMedia(v);
+      hls.on(Hls.Events.MANIFEST_PARSED,()=>{v.play().catch(()=>{});loading(false);setStatus("Lecture (HLS)");});
+      hls.on(Hls.Events.ERROR,(_,d)=>{ if(d.fatal){ hls.destroy();hls=null; tryTs(it); }});
+      return;
+    }
+  }
+  tryTs(it);
+}
+
+// Fallback: raw MPEG-TS stream via mpegts.js
+function tryTs(it){
+  if(current.type!=="live"){ loading(false); setStatus("Flux non lisible dans le navigateur."); return; }
+  setStatus("Repli MPEG-TS…");
+  const src=prox(streamUrl("live", it.stream_id, "ts"));
+  if(window.mpegts && mpegts.isSupported()){
+    mpeg=mpegts.createPlayer({type:"mpegts",isLive:true,url:src},{enableWorker:true,liveBufferLatencyChasing:true});
+    const v=$("#video");
+    mpeg.attachMediaElement(v);
+    mpeg.load();
+    mpeg.play().then(()=>{loading(false);setStatus("Lecture (TS)");}).catch(()=>{});
+    mpeg.on(mpegts.Events.ERROR,()=>{loading(false);setStatus("Impossible de lire ce flux (CORS ou format).");});
+  } else {
+    loading(false); setStatus("Ce navigateur ne peut pas lire ce flux.");
+  }
+}
+
+/* ---------------- Logout ---------------- */
+$("#logout").addEventListener("click",()=>{
+  destroyPlayers();
+  localStorage.removeItem(LS);
+  location.reload();
+});
+
+/* ---------------- Auto-login ---------------- */
+(function(){
+  const saved=localStorage.getItem(LS);
+  if(!saved) return;
+  try{
+    cfg=JSON.parse(saved);
+    $("#host").value=cfg.host||""; $("#user").value=cfg.user||"";
+    $("#pass").value=cfg.pass||""; $("#proxy").value=cfg.proxy||"";
+    getJSON({}).then(info=>{
+      if(info&&info.user_info&&info.user_info.auth!==0) startApp(info);
+    }).catch(()=>{/* stay on login */});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
