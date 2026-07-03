@@ -383,7 +383,17 @@ function startPlayback(src, ext, it){
       return;
     }
     if(window.Hls && Hls.isSupported()){
-      hls=new Hls({maxBufferLength:20});
+      hls=new Hls({
+        lowLatencyMode:false,        // on privilégie la fluidité, pas le direct absolu
+        maxBufferLength:30,          // ~30 s d'avance en mémoire
+        maxMaxBufferLength:120,
+        backBufferLength:30,
+        liveSyncDurationCount:6,     // reste un peu en retrait du direct = moins de coupures
+        liveMaxLatencyDurationCount:30,
+        fragLoadingMaxRetry:6,
+        manifestLoadingMaxRetry:4,
+        levelLoadingMaxRetry:4
+      });
       hls.loadSource(proxied);
       hls.attachMedia(v);
       hls.on(Hls.Events.MANIFEST_PARSED,()=>{v.play().catch(()=>{});loading(false);setStatus("Lecture (HLS)");});
@@ -400,7 +410,14 @@ function tryTs(it){
   setStatus("Repli MPEG-TS…");
   const src=prox(streamUrl("live", it.stream_id, "ts"));
   if(window.mpegts && mpegts.isSupported()){
-    mpeg=mpegts.createPlayer({type:"mpegts",isLive:true,url:src},{enableWorker:true,liveBufferLatencyChasing:true});
+    mpeg=mpegts.createPlayer({type:"mpegts",isLive:true,url:src},{
+      enableWorker:true,
+      enableStashBuffer:true,        // réserve d'image avant lecture = fluidité
+      stashInitialSize:1024*1024,    // ~1 Mo de tampon initial
+      liveBufferLatencyChasing:false,// NE PAS courir après le direct (cause des saccades)
+      lazyLoad:false,
+      autoCleanupSourceBuffer:true
+    });
     const v=$("#video");
     mpeg.attachMediaElement(v);
     mpeg.load();
