@@ -41,33 +41,40 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  let upstream;
-  try { upstream = new URL(target); }
-  catch { res.writeHead(400).end("URL invalide"); return; }
-
-  const client = upstream.protocol === "https:" ? https : http;
   const headers = {};
   // On relaie le Range (essentiel pour le streaming vidéo) et un User-Agent standard
   if (req.headers.range) headers["Range"] = req.headers.range;
   headers["User-Agent"] = req.headers["user-agent"] || "Mozilla/5.0 IPTV-Player";
+  const method = req.method === "HEAD" ? "HEAD" : "GET";
 
-  const proxied = client.request(
-    upstream,
-    { method: req.method === "HEAD" ? "HEAD" : "GET", headers },
-    (up) => {
+  // Suit les redirections côté serveur (beaucoup de panels IPTV renvoient un 302
+  // vers un autre hôte pour les listes de chaînes — le navigateur, lui, bloque).
+  function forward(rawUrl, depth) {
+    let upstream;
+    try { upstream = new URL(rawUrl); }
+    catch { res.writeHead(400).end("URL invalide"); return; }
+
+    const client = upstream.protocol === "https:" ? https : http;
+    const proxied = client.request(upstream, { method, headers }, (up) => {
+      const code = up.statusCode || 502;
+      const loc = up.headers.location;
+      if (code >= 300 && code < 400 && loc && depth < 5) {
+        up.resume(); // vide la réponse
+        return forward(new URL(loc, upstream).toString(), depth + 1);
+      }
       const h = { ...up.headers };
-      delete h["access-control-allow-origin"]; // évite les doublons
-      res.writeHead(up.statusCode || 502, h);
+      delete h["access-control-allow-origin"]; // évite les doublons avec les nôtres
+      res.writeHead(code, h);
       up.pipe(res);
-    }
-  );
+    });
+    proxied.on("error", (err) => {
+      if (!res.headersSent) res.writeHead(502, { "Content-Type": "text/plain" });
+      res.end("Erreur proxy : " + err.message);
+    });
+    proxied.end();
+  }
 
-  proxied.on("error", (err) => {
-    res.writeHead(502, { "Content-Type": "text/plain" });
-    res.end("Erreur proxy : " + err.message);
-  });
-
-  proxied.end();
+  forward(target, 0);
 });
 
 server.listen(PORT, () => {
