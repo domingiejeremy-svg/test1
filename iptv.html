@@ -512,10 +512,38 @@ const syncNpFav2=syncNpFav; window.syncNpFav=syncNpFav;
 $("#npFav").addEventListener("click",()=>{if(!nowItem)return;toggleFav(nowType,nowItem);syncNpFav();if(cur.type==="fav")renderFavs();else renderContent();});
 
 /* ---------- Playback ---------- */
-function destroy(){if(hls){hls.destroy();hls=null;}if(mpeg){try{mpeg.destroy();}catch(e){}mpeg=null;}}
+let liveItem=null,liveWatch=null,lastReconnect=0,reconnCount=0;
+function clearLiveWatch(){if(liveWatch){clearInterval(liveWatch);liveWatch=null;}}
+function destroy(){clearLiveWatch();const v=$("#video");v.onended=null;v.onerror=null;v.onstalled=null;if(hls){try{hls.destroy();}catch(e){}hls=null;}if(mpeg){try{mpeg.destroy();}catch(e){}mpeg=null;}}
+function reconnectLive(reason){
+  if(nowType!=="live"||!liveItem)return;
+  const now=Date.now();if(now-lastReconnect<3500)return; // anti-boucle
+  lastReconnect=now;
+  if(++reconnCount>8){clearLiveWatch();setStatus("Flux indisponible pour le moment.");return;}
+  setStatus(`<span class="spinner"></span> Reconnexion…`);
+  if(hls){try{hls.destroy();}catch(e){}hls=null;}
+  if(mpeg){try{mpeg.destroy();}catch(e){}mpeg=null;}
+  startPlayback(streamUrl("live",liveItem.stream_id,"m3u8"),"m3u8",liveItem,"live");
+}
+// Surveille le direct : si la vidéo se termine ou se fige, on relance automatiquement.
+function armLiveRecovery(){
+  if(nowType!=="live")return;
+  const v=$("#video");
+  v.onended=()=>{ if(nowType==="live")reconnectLive("ended"); };
+  clearLiveWatch();
+  let last=-1,stall=0;
+  liveWatch=setInterval(()=>{
+    if(nowType!=="live"){clearLiveWatch();return;}
+    if(v.paused||v.seeking)return;
+    if(v.currentTime<=last+0.05){ if(++stall>=6){stall=0;reconnectLive("stall");} }
+    else {stall=0;reconnCount=0;}
+    last=v.currentTime;
+  },1500);
+}
 async function play(it,type){
   if(type==="series")return openSeries(it);
   destroy();
+  reconnCount=0;liveItem=null;
   nowItem=it;nowType=type;playingKey=keyOf(type,it);playingEp=null;
   pushRecent(type,it);
   $("#placeholder").style.display="none";
@@ -608,27 +636,39 @@ function startPlayback(src,ext,it,type){
     return;
   }
   if(ext==="m3u8"){
-    if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=url;v.play().catch(()=>{});v.onplaying=()=>setStatus(liveTag());v.onerror=()=>tryTs(it);return;}
+    liveItem=it;
     if(window.Hls&&Hls.isSupported()){
-      hls=new Hls({lowLatencyMode:false,maxBufferLength:30,maxMaxBufferLength:120,backBufferLength:30,liveSyncDurationCount:6,liveMaxLatencyDurationCount:30,fragLoadingMaxRetry:6,manifestLoadingMaxRetry:4,levelLoadingMaxRetry:4});
+      hls=new Hls({
+        liveDurationInfinity:true,     // le direct est infini → pas de "fin de vidéo"
+        lowLatencyMode:false,maxBufferLength:30,maxMaxBufferLength:120,backBufferLength:30,
+        liveSyncDurationCount:6,liveMaxLatencyDurationCount:30,
+        fragLoadingMaxRetry:8,manifestLoadingMaxRetry:6,levelLoadingMaxRetry:6
+      });
       hls.loadSource(url);hls.attachMedia(v);
-      hls.on(Hls.Events.MANIFEST_PARSED,()=>{v.play().catch(()=>{});setStatus(liveTag());});
-      hls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){hls.destroy();hls=null;tryTs(it);}});
+      hls.on(Hls.Events.MANIFEST_PARSED,()=>{v.play().catch(()=>{});setStatus(liveTag());armLiveRecovery();});
+      hls.on(Hls.Events.ERROR,(_,d)=>{
+        if(!d.fatal)return;
+        if(d.type==="mediaError"){try{hls.recoverMediaError();return;}catch(e){}}
+        if(d.type==="networkError"){try{hls.startLoad();return;}catch(e){}}
+        try{hls.destroy();}catch(e){}hls=null;tryTs(it);
+      });
       return;
     }
+    if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=url;v.play().catch(()=>{});v.onplaying=()=>{setStatus(liveTag());armLiveRecovery();};v.onerror=()=>tryTs(it);return;}
   }
   tryTs(it);
 }
 function liveTag(){return `<span class="live-dot"></span> En direct`;}
 function tryTs(it){
   if(nowType!=="live"){setStatus("Flux non lisible dans le navigateur.");return;}
+  liveItem=it;
   setStatus(`<span class="spinner"></span> Repli MPEG-TS…`);
   const src=prox(streamUrl("live",it.stream_id,"ts"));
   if(window.mpegts&&mpegts.isSupported()){
     mpeg=mpegts.createPlayer({type:"mpegts",isLive:true,url:src},{enableWorker:true,enableStashBuffer:true,stashInitialSize:1024*1024,liveBufferLatencyChasing:false,lazyLoad:false,autoCleanupSourceBuffer:true});
     const v=$("#video");mpeg.attachMediaElement(v);mpeg.load();
-    mpeg.play().then(()=>setStatus(liveTag())).catch(()=>{});
-    mpeg.on(mpegts.Events.ERROR,()=>setStatus("Impossible de lire ce flux (CORS ou format)."));
+    mpeg.play().then(()=>{setStatus(liveTag());armLiveRecovery();}).catch(()=>{});
+    mpeg.on(mpegts.Events.ERROR,()=>reconnectLive("mpegts-error"));
   }else setStatus("Ce navigateur ne peut pas lire ce flux.");
 }
 
