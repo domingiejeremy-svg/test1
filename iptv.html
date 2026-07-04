@@ -531,13 +531,17 @@ function armLiveRecovery(){
   const v=$("#video");
   v.onended=()=>{ if(nowType==="live")reconnectLive("ended"); };
   clearLiveWatch();
-  let last=-1,stall=0;
+  let last=0,stall=0;
   liveWatch=setInterval(()=>{
     if(nowType!=="live"){clearLiveWatch();return;}
     if(v.paused||v.seeking)return;
-    if(v.currentTime<=last+0.05){ if(++stall>=6){stall=0;reconnectLive("stall");} }
-    else {stall=0;reconnCount=0;}
-    last=v.currentTime;
+    const t=v.currentTime;
+    // On ne surveille les blocages qu'APRÈS que la lecture ait réellement démarré
+    if(t>0.5){
+      if(t<=last+0.05){ if(++stall>=6){stall=0;reconnectLive("stall");} }
+      else {stall=0;reconnCount=0;}
+    }
+    last=t;
   },1500);
 }
 async function play(it,type){
@@ -644,12 +648,15 @@ function startPlayback(src,ext,it,type){
         liveSyncDurationCount:6,liveMaxLatencyDurationCount:30,
         fragLoadingMaxRetry:8,manifestLoadingMaxRetry:6,levelLoadingMaxRetry:6
       });
+      let hlsPlayed=false;
       hls.loadSource(url);hls.attachMedia(v);
       hls.on(Hls.Events.MANIFEST_PARSED,()=>{v.play().catch(()=>{});setStatus(liveTag());armLiveRecovery();});
+      hls.on(Hls.Events.FRAG_BUFFERED,()=>{hlsPlayed=true;});
       hls.on(Hls.Events.ERROR,(_,d)=>{
         if(!d.fatal)return;
-        if(d.type==="mediaError"){try{hls.recoverMediaError();return;}catch(e){}}
-        if(d.type==="networkError"){try{hls.startLoad();return;}catch(e){}}
+        // Récupération sur place UNIQUEMENT si la lecture avait déjà démarré
+        if(hlsPlayed&&d.type==="mediaError"){try{hls.recoverMediaError();return;}catch(e){}}
+        // Sinon (échec au démarrage) → on bascule sur le flux MPEG-TS, comme avant
         try{hls.destroy();}catch(e){}hls=null;tryTs(it);
       });
       return;
