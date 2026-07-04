@@ -124,7 +124,7 @@
   .chan .nm{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chan .sub{font-size:11.5px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chan.playing .nm{color:#fff}
-  .star{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--muted2);opacity:0;transition:.12s;flex:none}
+  .star{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--muted2);opacity:.45;transition:.12s;flex:none}
   .chan:hover .star{opacity:1}
   .star:hover{background:var(--bg3);color:var(--gold)}
   .star.on{opacity:1;color:var(--gold)}
@@ -178,6 +178,36 @@
     background-size:200% 100%;animation:sh 1.3s infinite}
   @keyframes sh{to{background-position:-200% 0}}
 
+  /* series detail */
+  .detail{display:flex;flex-direction:column}
+  .back{display:flex;align-items:center;gap:8px;margin:12px 12px 4px;padding:8px 12px;border-radius:10px;color:var(--muted);font-weight:600;font-size:13px;align-self:flex-start;background:var(--bg2)}
+  .back:hover{color:var(--text);background:var(--bg3)}
+  .hero{display:flex;gap:16px;padding:12px 16px 16px}
+  .hero .cover{width:110px;aspect-ratio:2/3;flex:none;border-radius:12px;overflow:hidden;background:var(--bg2);border:1px solid var(--line);box-shadow:0 10px 26px rgba(0,0,0,.4)}
+  .hero .cover img{width:100%;height:100%;object-fit:cover}
+  .hero .cover .ph{width:100%;height:100%;display:grid;place-items:center;font-size:30px;color:var(--muted2)}
+  .hero h2{margin:0 0 6px;font-size:18px;letter-spacing:-.01em}
+  .hero .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+  .hero .tag{font-size:11px;color:var(--muted);background:var(--bg2);padding:3px 9px;border-radius:20px}
+  .hero .plot{font-size:12.5px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .hero .dfav{margin-top:10px;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:10px;background:var(--bg2);color:var(--muted);font-size:12.5px;font-weight:600}
+  .hero .dfav.on{color:var(--gold);background:rgba(255,194,75,.12)}
+  .seasons{display:flex;gap:6px;flex-wrap:wrap;padding:4px 16px 12px;border-bottom:1px solid var(--line)}
+  .season-btn{padding:7px 14px;border-radius:9px;background:var(--bg2);color:var(--muted);font-weight:600;font-size:13px;transition:.12s}
+  .season-btn:hover{color:var(--text)}
+  .season-btn.active{background:var(--grad);color:#fff}
+  .episodes{padding:8px}
+  .ep{display:flex;align-items:center;gap:12px;padding:10px 11px;border-radius:11px;cursor:pointer;transition:.12s;position:relative}
+  .ep:hover{background:var(--bg2)}
+  .ep.playing{background:var(--acc-soft)}
+  .ep .num{width:34px;height:34px;flex:none;border-radius:9px;background:var(--bg2);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)}
+  .ep.playing .num{background:var(--grad);color:#fff}
+  .ep .en{flex:1;min-width:0}
+  .ep .en .t{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ep .en .d{font-size:11.5px;color:var(--muted2)}
+  .ep .pl{color:var(--muted2)}
+  .ep:hover .pl{color:var(--acc)}
+
   @media(max-width:900px){
     .workspace,#app.mode-fav .workspace{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
     .cats-panel{border-right:none;border-bottom:1px solid var(--line);max-height:33vh}
@@ -227,6 +257,7 @@
       <button data-type="live" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="m17 2-5 5-5-5"/></svg>Chaînes</button>
       <button data-type="vod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 12h18"/></svg>Films</button>
       <button data-type="series"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m7 2 5 5 5-5"/></svg>Séries</button>
+      <button data-type="recent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Récent</button>
       <button data-type="fav"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.5 7 .6-5.3 4.6 1.6 6.8L12 17.3 5.1 20.5l1.6-6.8L1.4 9.1l7-.6z"/></svg>Favoris</button>
     </nav>
     <span class="spacer"></span>
@@ -283,6 +314,8 @@ let cfg=null, hls=null, mpeg=null;
 let cur={type:"live",catId:"all",all:[],cats:[],counts:{}};
 let playingKey=null, nowItem=null, nowType=null;
 let favs=JSON.parse(localStorage.getItem("iptv_favs2")||"{}");
+let recents=JSON.parse(localStorage.getItem("iptv_recent")||"[]");
+function pushRecent(type,it){const k=keyOf(type,it);recents=recents.filter(r=>keyOf(r.type,r.it)!==k);recents.unshift({type,it,ts:Date.now()});recents=recents.slice(0,40);localStorage.setItem("iptv_recent",JSON.stringify(recents));}
 
 /* ---------- API ---------- */
 function api(p){const b=cfg.host.replace(/\/+$/,"");const q=new URLSearchParams({username:cfg.user,password:cfg.pass,...p});return prox(`${b}/player_api.php?${q}`);}
@@ -335,8 +368,9 @@ $("#nav").addEventListener("click",e=>{
 async function switchType(type){
   cur.type=type;cur.catId="all";$("#search").value="";$("#catFilter").value="";
   const app=$("#app");
-  app.className=type==="fav"?"mode-fav":(type==="live"?"mode-list":"mode-grid");
+  app.className=(type==="fav"||type==="recent")?"mode-fav":(type==="live"?"mode-list":"mode-grid");
   if(type==="fav"){renderFavs();return;}
+  if(type==="recent"){renderRecent();return;}
   $("#catsTitle").textContent="Catégories";
   $("#cats").innerHTML="";
   $("#content").innerHTML='<div class="skeleton">'+Array(8).fill('<div class="sk"></div>').join("")+'</div>';
@@ -371,7 +405,7 @@ function renderCats(){
 $("#catFilter").addEventListener("input",renderCats);
 
 /* ---------- Content (list or grid) ---------- */
-$("#search").addEventListener("input",()=>{ if(cur.type==="fav")renderFavs();else renderContent(); });
+$("#search").addEventListener("input",()=>{ if(cur.type==="fav")renderFavs();else if(cur.type==="recent")renderRecent();else renderContent(); });
 
 function currentItems(){
   const q=$("#search").value.trim().toLowerCase();
@@ -430,40 +464,46 @@ function renderGrid(box,items,type){
   grid.appendChild(frag);box.appendChild(grid);
 }
 
-/* ---------- Favorites view ---------- */
-function renderFavs(){
-  $("#app").className="mode-fav";
-  const q=$("#search").value.trim().toLowerCase();
-  let entries=Object.values(favs).sort((a,b)=>b.ts-a.ts);
-  if(q)entries=entries.filter(e=>(e.it.name||"").toLowerCase().includes(q));
-  $("#countBadge").textContent=entries.length?`${entries.length} favori${entries.length>1?"s":""}`:"";
+/* ---------- Favorites / Recent views ---------- */
+const tagOf=t=>t==="live"?"Chaîne":t==="vod"?"Film":"Série";
+function renderEntries(entries,empty){
   const box=$("#content");box.className="scroll";box.innerHTML="";
-  if(!entries.length){box.innerHTML=`<div class="empty"><div class="big">★</div><b>Aucun favori</b><br><span style="font-size:13px">Clique l'étoile sur une chaîne ou un film</span></div>`;return;}
-  // live favorites as list, vod/series as grid — mix in one list style for simplicity
+  if(!entries.length){box.innerHTML=`<div class="empty"><div class="big">${empty.icon}</div><b>${empty.title}</b><br><span style="font-size:13px">${empty.sub}</span></div>`;return;}
   const wrap=document.createElement("div");wrap.className="list";
   entries.forEach(({type,it})=>{
     const row=document.createElement("div");
     row.className="chan"+(keyOf(type,it)===playingKey?" playing active":"");
     const logo=it.stream_icon||it.cover||"";
-    const tag=type==="live"?"Chaîne":type==="vod"?"Film":"Série";
     row.innerHTML=`
       <div class="logo-box">${logo?`<img src="${esc(logo)}" onerror="this.remove()">`:`<span class="ph">${type==="live"?"📺":"🎬"}</span>`}</div>
-      <div class="meta"><div class="nm">${esc(it.name||"Sans nom")}</div><div class="sub">${tag}</div></div>
-      <button class="star on">${STAR}</button>`;
-    row.querySelector(".star").onclick=e=>{e.stopPropagation();toggleFav(type,it);renderFavs();};
+      <div class="meta"><div class="nm">${esc(it.name||"Sans nom")}</div><div class="sub">${tagOf(type)}</div></div>
+      <button class="star ${isFav(type,it)?"on":""}">${STAR}</button>`;
+    row.querySelector(".star").onclick=e=>{e.stopPropagation();toggleFav(type,it);if(cur.type==="fav")renderFavs();else e.currentTarget.classList.toggle("on");syncNpFav();};
     row.onclick=()=>play(it,type);
     wrap.appendChild(row);
   });
   box.appendChild(wrap);
 }
+function renderFavs(){
+  const q=$("#search").value.trim().toLowerCase();
+  let entries=Object.values(favs).sort((a,b)=>b.ts-a.ts);
+  if(q)entries=entries.filter(e=>(e.it.name||"").toLowerCase().includes(q));
+  $("#countBadge").textContent=entries.length?`${entries.length} favori${entries.length>1?"s":""}`:"";
+  renderEntries(entries,{icon:"★",title:"Aucun favori",sub:"Clique l'étoile ⭐ sur une chaîne, un film ou une série"});
+}
+function renderRecent(){
+  const q=$("#search").value.trim().toLowerCase();
+  let entries=recents.slice();
+  if(q)entries=entries.filter(e=>(e.it.name||"").toLowerCase().includes(q));
+  $("#countBadge").textContent=entries.length?`${entries.length} élément${entries.length>1?"s":""}`:"";
+  renderEntries(entries,{icon:"🕘",title:"Rien pour l'instant",sub:"Ce que tu regardes apparaîtra ici"});
+}
 
 /* ---------- Utils ---------- */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function setStatus(html){$("#npStatus").innerHTML=html;}
-function markPlaying(){
-  document.querySelectorAll(".chan").forEach(r=>r.classList.remove("playing","active"));
-  syncNpFav();
-}
+function setNow(it,title){const logo=it.stream_icon||it.cover||"";$("#npLogo").innerHTML=logo?`<img src="${esc(logo)}" onerror="this.remove()">`:"";$("#npTitle").textContent=title||it.name||"Lecture";syncNpFav();}
+function refreshView(){if(cur.type==="fav")renderFavs();else if(cur.type==="recent")renderRecent();else if(cur.type==="live"||cur.type==="vod")renderContent();}
 function syncNpFav(){
   if(!nowItem){$("#npFav").classList.remove("on");return;}
   $("#npFav").classList.toggle("on",isFav(nowType,nowItem));
@@ -474,30 +514,89 @@ $("#npFav").addEventListener("click",()=>{if(!nowItem)return;toggleFav(nowType,n
 /* ---------- Playback ---------- */
 function destroy(){if(hls){hls.destroy();hls=null;}if(mpeg){try{mpeg.destroy();}catch(e){}mpeg=null;}}
 async function play(it,type){
+  if(type==="series")return openSeries(it);
   destroy();
-  nowItem=it;nowType=type;playingKey=keyOf(type,it);
+  nowItem=it;nowType=type;playingKey=keyOf(type,it);playingEp=null;
+  pushRecent(type,it);
   $("#placeholder").style.display="none";
-  const logo=it.stream_icon||it.cover||"";
-  $("#npLogo").innerHTML=logo?`<img src="${esc(logo)}" onerror="this.remove()">`:"";
-  $("#npTitle").textContent=it.name||"Lecture";
+  setNow(it);
   setStatus(`<span class="spinner"></span> Ouverture…`);
-  markPlaying();
-  // highlight in current list
-  if(cur.type!=="fav"&&type===cur.type){renderContent();}else if(cur.type==="fav"){renderFavs();}
-
-  if(type==="series"){
-    try{
-      const info=await getJSON({action:"get_series_info",series_id:it.series_id});
-      const seasons=info.episodes||{};const s0=Object.keys(seasons)[0];
-      const ep=s0&&seasons[s0]&&seasons[s0][0];
-      if(!ep){setStatus("Aucun épisode trouvé.");return;}
-      $("#npTitle").textContent=`${it.name} · ${ep.title||"Épisode 1"}`;
-      startPlayback(streamUrl("series",ep.id,ep.container_extension||"mp4"),ep.container_extension||"mp4",it,type);
-    }catch(x){setStatus("Erreur série : "+x.message);}
-    return;
-  }
+  refreshView();
   if(type==="vod"){const ext=it.container_extension||"mp4";startPlayback(streamUrl("vod",it.stream_id,ext),ext,it,type);return;}
   startPlayback(streamUrl("live",it.stream_id,"m3u8"),"m3u8",it,type);
+}
+
+/* ---------- Series detail ---------- */
+let detailSeries=null,detailInfo=null,playingEp=null;
+async function openSeries(series){
+  detailSeries=series;$("#countBadge").textContent="";
+  const box=$("#content");box.className="scroll";
+  box.innerHTML='<div class="skeleton" style="padding:16px">'+Array(6).fill('<div class="sk"></div>').join("")+'</div>';
+  try{
+    const info=await getJSON({action:"get_series_info",series_id:series.series_id});
+    detailInfo=info;renderSeriesDetail(series,info);
+  }catch(x){box.innerHTML=`<div class="empty"><div class="big">⚠️</div>Erreur : ${esc(x.message)}</div>`;}
+}
+function renderSeriesDetail(series,info,activeSeason){
+  const seasons=info.episodes||{};
+  const keys=Object.keys(seasons).sort((a,b)=>(+a)-(+b));
+  const box=$("#content");box.className="scroll";
+  if(!keys.length){box.innerHTML=`<div class="detail"><button class="back">‹ Retour aux séries</button><div class="empty"><div class="big">🎬</div>Aucun épisode disponible</div></div>`;box.querySelector(".back").onclick=()=>{detailSeries=null;renderContent();};return;}
+  const sk=(activeSeason&&keys.includes(activeSeason))?activeSeason:keys[0];
+  const inf=info.info||{};
+  const cover=inf.cover||inf.cover_big||series.cover||series.stream_icon||"";
+  const tags=[];
+  if(inf.genre)tags.push(inf.genre);
+  const yr=(inf.releaseDate||inf.releasedate||inf.year||"")+"";if(yr)tags.push(yr.slice(0,4));
+  if(inf.rating)tags.push("★ "+inf.rating);
+  box.innerHTML=`
+    <div class="detail">
+      <button class="back">‹ Retour aux séries</button>
+      <div class="hero">
+        <div class="cover">${cover?`<img src="${esc(cover)}" onerror="this.parentNode.innerHTML='<div class=\\'ph\\'>🎬</div>'">`:`<div class="ph">🎬</div>`}</div>
+        <div style="min-width:0">
+          <h2>${esc(series.name||"Série")}</h2>
+          <div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
+          <div class="plot">${esc(inf.plot||inf.description||"Pas de description disponible.")}</div>
+          <button class="dfav ${isFav("series",series)?"on":""}">${STAR}<span>${isFav("series",series)?"Dans les favoris":"Ajouter aux favoris"}</span></button>
+        </div>
+      </div>
+      <div class="seasons">${keys.map(k=>`<button class="season-btn ${k===sk?"active":""}" data-s="${esc(k)}">Saison ${esc(k)}</button>`).join("")}</div>
+      <div class="episodes" id="episodes"></div>
+    </div>`;
+  box.querySelector(".back").onclick=()=>{detailSeries=null;renderContent();};
+  const dfav=box.querySelector(".dfav");
+  dfav.onclick=()=>{toggleFav("series",series);const on=isFav("series",series);dfav.classList.toggle("on",on);dfav.querySelector("span").textContent=on?"Dans les favoris":"Ajouter aux favoris";syncNpFav();};
+  box.querySelectorAll(".season-btn").forEach(b=>b.onclick=()=>renderSeriesDetail(series,info,b.dataset.s));
+  renderEpisodes(series,seasons[sk]);
+}
+function renderEpisodes(series,eps){
+  const box=$("#episodes");box.innerHTML="";
+  (eps||[]).forEach(ep=>{
+    const epKey=`${series.series_id}:${ep.id}`;
+    const row=document.createElement("div");
+    row.className="ep"+(epKey===playingEp?" playing":"");
+    row.dataset.ep=epKey;
+    const dur=(ep.info&&(ep.info.duration||ep.info.duration_secs))||"";
+    row.innerHTML=`
+      <div class="num">${esc(ep.episode_num||"•")}</div>
+      <div class="en"><div class="t">${esc(ep.title||("Épisode "+ep.episode_num))}</div><div class="d">${dur?esc(String(dur)):""}</div></div>
+      <div class="pl"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
+    row.onclick=()=>playEpisode(series,ep);
+    box.appendChild(row);
+  });
+}
+function playEpisode(series,ep){
+  destroy();
+  nowItem=series;nowType="series";playingKey=keyOf("series",series);
+  playingEp=`${series.series_id}:${ep.id}`;
+  pushRecent("series",series);
+  $("#placeholder").style.display="none";
+  setNow(series,`${series.name} · ${ep.title||("Épisode "+ep.episode_num)}`);
+  setStatus(`<span class="spinner"></span> Ouverture…`);
+  document.querySelectorAll(".ep").forEach(r=>r.classList.toggle("playing",r.dataset.ep===playingEp));
+  const ext=ep.container_extension||"mp4";
+  startPlayback(streamUrl("series",ep.id,ext),ext,series,"series");
 }
 
 function startPlayback(src,ext,it,type){
