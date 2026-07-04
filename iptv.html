@@ -525,7 +525,11 @@ function reconnectLive(reason){
   if(mpeg){try{mpeg.destroy();}catch(e){}mpeg=null;}
   startPlayback(streamUrl("live",liveItem.stream_id,"m3u8"),"m3u8",liveItem,"live");
 }
-// Surveille le direct : si la vidéo se termine ou se fige, on relance automatiquement.
+// Gestion du direct : coussin de tampon + on ne recule JAMAIS, on saute en avant.
+const LIVE_CUSHION=6;   // secondes de tampon gardées derrière le direct (absorbe les micro-coupures)
+const LIVE_JUMP=12;     // au-delà de ce retard, on rattrape le direct
+function liveEdge(v){const b=v.buffered;return b.length?b.end(b.length-1):0;}
+function seekToLive(v){const target=liveEdge(v)-LIVE_CUSHION;if(target>v.currentTime+0.3){try{v.currentTime=target;}catch(e){}}}
 function armLiveRecovery(){
   if(nowType!=="live")return;
   const v=$("#video");
@@ -535,14 +539,17 @@ function armLiveRecovery(){
   liveWatch=setInterval(()=>{
     if(nowType!=="live"){clearLiveWatch();return;}
     if(v.paused||v.seeking)return;
-    const t=v.currentTime;
-    // On ne surveille les blocages qu'APRÈS que la lecture ait réellement démarré
-    if(t>0.5){
-      if(t<=last+0.05){ if(++stall>=6){stall=0;reconnectLive("stall");} }
-      else {stall=0;reconnCount=0;}
-    }
+    const t=v.currentTime,edge=liveEdge(v),lat=edge-t;
+    // 1) Trop de retard (après un bug) → on saute au direct, jamais en arrière (fini les "clips")
+    if(lat>LIVE_JUMP){seekToLive(v);last=v.currentTime;return;}
+    // 2) Lecture figée (playhead ne bouge plus)
+    if(t>0.5 && t<=last+0.05){
+      stall++;
+      if(edge-t>1.5){seekToLive(v);stall=0;}        // des données devant → on rattrape sans rejouer
+      else if(stall>=5){stall=0;reconnectLive("stall");} // plus rien devant → reconnexion
+    } else { stall=0; if(t>last)reconnCount=0; }
     last=t;
-  },1500);
+  },1000);
 }
 async function play(it,type){
   if(type==="series")return openSeries(it);
