@@ -1,0 +1,57 @@
+name: Bulletin resultats week-end
+
+on:
+  schedule:
+    # Lundi 7h00 heure de Paris (5h00 UTC en ete, 6h00 UTC en hiver).
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Date de reference (AAAA-MM-JJ), vide = aujourd'hui"
+        required: false
+        type: string
+
+jobs:
+  bulletin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: resultats-47
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: resultats-47/requirements.txt
+
+      - name: Installer les dependances
+        run: pip install -r requirements.txt
+
+      - name: Verifier la chaine
+        run: python -m unittest discover -s tests
+
+      - name: Generer le bulletin
+        id: generer
+        run: |
+          mkdir -p bulletins
+          jour="${{ inputs.date }}"
+          if [ -n "$jour" ]; then
+            fichier="bulletins/$jour.md"
+            python -m resultats47 bulletin --date "$jour" --format markdown -o "$fichier"
+          else
+            fichier="bulletins/$(date +%Y-%m-%d).md"
+            python -m resultats47 bulletin --format markdown -o "$fichier"
+          fi
+          echo "fichier=$fichier" >> "$GITHUB_OUTPUT"
+          cat "$fichier" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publier le bulletin
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulletin-weekend
+          path: resultats-47/bulletins/
+          if-no-files-found: warn

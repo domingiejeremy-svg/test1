@@ -1,0 +1,5 @@
+requests>=2.31
+PyYAML>=6.0
+# Client officiel maintenu pour l'API FFBB (Directus + Meilisearch),
+# gere la resolution automatique des tokens publics.
+ffbb-api-client-v2>=1.4.0

@@ -1,0 +1,102 @@
+# Clubs suivis pour le bulletin du lundi.
+#
+# Chaque club a un "nom" (celui que vous dites a l'antenne) et des "alias"
+# (les graphies utilisees par les federations). Le rapprochement se fait sur
+# les mots significatifs : "Marmande" retrouve "US MARMANDAISE".
+#
+# Si un club ressort en "Sans rencontre trouvee", ajoutez-lui l'alias exact
+# affiche par la federation. La commande `chercher` aide a le trouver :
+#     python -m resultats47 chercher --sport football "Marmande"
+#
+# Les alias marques "a confirmer" sont des hypotheses : verifiez-les au
+# premier lancement.
+
+options:
+  seuil_correspondance: 0.86
+  fuseau: Europe/Paris
+
+competitions:
+
+  # ------------------------------------------------------------------ RUGBY
+  - sport: rugby
+    libelle: Nationale 2
+    slug: nationale-2
+    clubs:
+      - nom: Marmande
+        alias: [US Marmande, Union Sportive Marmandaise, Marmandaise]
+      - nom: Valence d'Agen
+        alias: [US Valence d'Agen, Valence Agen]
+      - nom: Fleurance
+        alias: [FC Fleurance, Fleurance Rugby]
+
+  - sport: rugby
+    libelle: Federale 1
+    slug: federale-1
+    poule: "4"
+    clubs:
+      - nom: Layrac
+        alias: [US Layrac, Layrac Rugby]
+      - nom: 4 Cantons
+        alias: [Quatre Cantons, RC Quatre Cantons, Cantons]   # a confirmer
+
+  - sport: rugby
+    libelle: Federale 2
+    slug: federale-2
+    poule: "7"
+    clubs:
+      - nom: Casteljaloux
+        alias: [US Casteljaloux, Casteljalousain]
+
+  - sport: rugby
+    libelle: Federale 3
+    slug: federale-3
+    poule: "11"
+    clubs:
+      - nom: RCBB
+        alias: [RC BB]                                        # a confirmer
+      - nom: USVL 47
+        alias: [USVL, Vallee du Lot 47]                       # a confirmer
+      - nom: Villeneuve-sur-Lot
+        alias: [Villeneuve, Stade Villeneuvois, Villeneuvois]
+      - nom: Pont-du-Casse
+        alias: [Pont du Casse]
+      - nom: Nerac
+        alias: [US Nerac, Neracais]
+
+  # --------------------------------------------------------------- FOOTBALL
+  - sport: football
+    libelle: Regional 1
+    clubs:
+      - nom: EBBE 47
+        alias: [Entente Boe Bon-Encontre Estillac, Bon-Encontre Boe, Boe Bon Encontre]
+      - nom: Marmande
+        alias: [Marmande 47, SU Marmande, Marmande Football]
+
+  - sport: football
+    libelle: Regional 2
+    clubs:
+      - nom: SU Agen
+        alias: [Sporting Union Agen, SUA Football, Agen SU]
+      - nom: Pont-du-Casse
+        alias: [Pont du Casse, AS Pont du Casse]
+
+  # ----------------------------------------------------------------- BASKET
+  - sport: basket
+    libelle: Nationale Masculine 3
+    clubs:
+      - nom: Villeneuve-sur-Lot
+        alias: [Villeneuve, VSL Basket, Villeneuve Basket]
+      - nom: Layrac-Astaffort
+        alias: [Layrac Astaffort, ALA Basket, Astaffort]
+      - nom: Seyches
+        alias: [US Seyches, Seyche]
+
+  - sport: basket
+    libelle: Pre-Nationale Masculine
+    clubs:
+      - nom: Agen Basket Club
+        alias: [Agen BC, ABC Agen, Agen Basket]
+      - nom: Colayrac
+        alias: [Colayrac Saint-Cirq, Colayrac St Cirq]
+      - nom: Brulhois
+        alias: [Basket Brulhois, Brulhois Basket]
