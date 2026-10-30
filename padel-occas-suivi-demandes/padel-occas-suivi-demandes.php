@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Suivi des demandes
  * Description: Ajoute un statut de traitement (menu déroulant), un historique et l'envoi de mails types directement depuis la liste des demandes (réparation / reprise).
- * Version:     1.3.0
+ * Version:     1.3.1
  * Author:      Padel Occas
  * License:     GPL v2 or later
  * Text Domain: poc-suivi
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'POC_SUIVI_VERSION', '1.3.0' );
+define( 'POC_SUIVI_VERSION', '1.3.1' );
 
 /* ════════════════════════════════════════════════════════════════════════════
    CLASSE PRINCIPALE
@@ -314,8 +314,13 @@ class POC_Suivi_Demandes {
         $html = '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1d2327">'
               . nl2br( esc_html( $corps ) ) . '</div>';
 
-        $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
-        $reply   = apply_filters( 'poc_suivi_reply_to', get_option( 'admin_email' ) );
+        // Même expéditeur que les mails WooCommerce (contact@…), sinon l'e-mail admin
+        $from_mail = get_option( 'woocommerce_email_from_address' );
+        if ( ! is_email( $from_mail ) ) $from_mail = get_option( 'admin_email' );
+        $from_name = get_option( 'woocommerce_email_from_name' ) ?: get_bloginfo( 'name' );
+
+        $headers = [ 'Content-Type: text/html; charset=UTF-8', 'From: ' . $from_name . ' <' . $from_mail . '>' ];
+        $reply   = apply_filters( 'poc_suivi_reply_to', $from_mail );
         if ( is_email( $reply ) ) $headers[] = 'Reply-To: ' . $reply;
 
         if ( ! wp_mail( $to, $objet, $html, $headers ) ) {
@@ -388,7 +393,7 @@ class POC_Suivi_Demandes {
 
                 <label for="poc-m-corps">Message</label>
                 <textarea id="poc-m-corps"></textarea>
-                <div class="poc-hint">Remplacez chaque [À COMPLÉTER : …] avant d'envoyer. Le client répondra à l'adresse e-mail du site.</div>
+                <div class="poc-hint">Remplacez chaque [À COMPLÉTER : …] avant d'envoyer. Le client répondra à l'adresse d'envoi de la boutique.</div>
 
                 <label><input type="checkbox" id="poc-m-maj" checked> <span id="poc-m-maj-txt"></span></label>
 
