@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Suivi des demandes
  * Description: Ajoute un statut de traitement (menu déroulant), un historique et l'envoi de mails types directement depuis la liste des demandes (réparation / reprise).
- * Version:     1.2.0
+ * Version:     1.3.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  * Text Domain: poc-suivi
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'POC_SUIVI_VERSION', '1.2.0' );
+define( 'POC_SUIVI_VERSION', '1.3.0' );
 
 /* ════════════════════════════════════════════════════════════════════════════
    CLASSE PRINCIPALE
@@ -94,7 +94,7 @@ class POC_Suivi_Demandes {
                 'corps'  => "Bonjour,\n\nMerci pour votre demande concernant votre raquette {modele}.\n\nAprès examen de vos photos, la réparation est possible :\n- Intervention : [À COMPLÉTER : type de réparation]\n- Tarif : [À COMPLÉTER : prix] €\n- Délai : [À COMPLÉTER : délai] jours après réception\n\nSi cela vous convient, répondez simplement à ce mail et nous vous enverrons les instructions pour nous faire parvenir la raquette." . $signature,
             ],
             'irreparable' => [
-                'label'  => 'Réparation impossible',
+                'label'  => 'Réparation impossible (avec code 10 %)',
                 'statut' => 'mail_irreparable',
                 'objet'  => 'Votre raquette {modele} – retour sur la réparation',
                 'corps'  => "Bonjour,\n\nMerci pour votre demande concernant votre raquette {modele}.\n\nMalheureusement, d'après vos photos, les dommages ne permettent pas une réparation fiable : [À COMPLÉTER : raison].\n\nNous préférons vous le dire franchement plutôt que de vous facturer une réparation qui ne tiendrait pas dans le temps.\n\nSi vous cherchez une nouvelle raquette, vous trouverez sur padeloccas.fr des raquettes d'occasion contrôlées et révisées. Pour vous aider à repartir sur le terrain, voici un code de 10 % sur votre prochaine commande : OCCAS10 (valable 30 jours, une utilisation, hors articles déjà en promotion).\n\nN'hésitez pas à répondre à ce mail si vous voulez un conseil sur le modèle qui vous conviendrait." . $signature,
@@ -104,6 +104,18 @@ class POC_Suivi_Demandes {
                 'statut' => 'mail_reprise',
                 'objet'  => 'Notre offre de reprise pour votre {modele}',
                 'corps'  => "Bonjour,\n\nMerci pour votre demande de reprise concernant votre raquette {modele}.\n\nVoici notre offre :\n- Reprise en cash : [À COMPLÉTER : montant] €\n- Reprise en avoir sur padeloccas.fr : [À COMPLÉTER : montant] €\n\nL'offre est valable 7 jours, sous réserve de l'état constaté à réception. Répondez à ce mail pour l'accepter : nous vous enverrons ensuite les instructions d'envoi." . $signature,
+            ],
+            'refus_offre' => [
+                'label'  => "Refus de l'offre (avec code 10 %)",
+                'statut' => 'refus',
+                'objet'  => 'Votre raquette {modele} – suite à notre offre',
+                'corps'  => "Bonjour,\n\nMerci pour votre retour concernant notre offre de reprise pour votre raquette {modele}. Nous comprenons tout à fait votre décision.\n\nSi vous cherchez une nouvelle raquette, vous trouverez sur padeloccas.fr des raquettes d'occasion contrôlées et révisées. Pour vous remercier de nous avoir contactés, voici un code de 10 % sur votre prochaine commande : OCCAS10 (valable 30 jours, une utilisation, hors articles déjà en promotion).\n\nEt si vous changez d'avis sur la reprise, il suffit de répondre à ce mail." . $signature,
+            ],
+            'reparee' => [
+                'label'  => 'Réparation terminée (avec code 10 %)',
+                'statut' => 'clos',
+                'objet'  => 'Votre raquette {modele} est réparée',
+                'corps'  => "Bonjour,\n\nBonne nouvelle : la réparation de votre raquette {modele} est terminée. Elle vous a été renvoyée [À COMPLÉTER : date d'envoi et numéro de suivi].\n\nMerci de nous avoir fait confiance. Pour votre prochaine commande sur padeloccas.fr, voici un code de 10 % sur votre prochaine commande : OCCAS10 (valable 30 jours, une utilisation, hors articles déjà en promotion)." . $signature,
             ],
             'relance' => [
                 'label'  => 'Relance',
