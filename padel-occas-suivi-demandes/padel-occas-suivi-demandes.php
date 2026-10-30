@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Suivi des demandes
  * Description: Ajoute un statut de traitement (menu déroulant), un historique et l'envoi de mails types directement depuis la liste des demandes (réparation / reprise).
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  * Text Domain: poc-suivi
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'POC_SUIVI_VERSION', '1.0.0' );
+define( 'POC_SUIVI_VERSION', '1.1.0' );
 
 /* ════════════════════════════════════════════════════════════════════════════
    CLASSE PRINCIPALE
@@ -52,6 +52,7 @@ class POC_Suivi_Demandes {
     public static function statuts() {
         return apply_filters( 'poc_suivi_statuts', [
             'nouveau'          => [ 'label' => 'À traiter',                      'groupe' => 'a_traiter' ],
+            'mail_photos'      => [ 'label' => 'Mail envoyé · photos demandées', 'groupe' => 'attente' ],
             'mail_reparation'  => [ 'label' => 'Mail envoyé · réparation',       'groupe' => 'attente' ],
             'mail_irreparable' => [ 'label' => 'Mail envoyé · irréparable',      'groupe' => 'attente' ],
             'mail_reprise'     => [ 'label' => 'Mail envoyé · offre de reprise', 'groupe' => 'attente' ],
@@ -80,6 +81,12 @@ class POC_Suivi_Demandes {
     public static function modeles_mail() {
         $signature = "\n\nÀ bientôt,\nL'équipe Padel Occas\npadeloccas.fr";
         return apply_filters( 'poc_suivi_modeles_mail', [
+            'photos' => [
+                'label'  => 'Demande de photos supplémentaires',
+                'statut' => 'mail_photos',
+                'objet'  => 'Votre demande pour {modele} – photos supplémentaires',
+                'corps'  => "Bonjour,\n\nMerci pour votre demande concernant votre raquette {modele}.\n\nPour vous faire une proposition précise, nous avons besoin de quelques photos supplémentaires de votre raquette :\n- la face avant et la face arrière en entier\n- le tour du cadre (la tranche), y compris le haut de la raquette\n- un gros plan de chaque zone abîmée (fissure, éclat, choc)\n- une photo nette du nom du modèle exact inscrit sur la raquette (nom, année, et la référence sur le cœur ou le manche si elle y figure)\n\nMerci d'envoyer des photos de votre propre raquette, prises par vous, et non des images tirées d'une annonce ou d'un site internet : elles nous servent à vérifier son état réel et son modèle exact.\n\nVous pouvez simplement répondre à ce mail en joignant les photos." . $signature,
+            ],
             'reparation' => [
                 'label'  => 'Réparation possible (devis)',
                 'statut' => 'mail_reparation',
