@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Suivi des demandes
  * Description: Ajoute un statut de traitement (menu déroulant), un historique et l'envoi de mails types directement depuis la liste des demandes (réparation / reprise).
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      Padel Occas
  * License:     GPL v2 or later
  * Text Domain: poc-suivi
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'POC_SUIVI_VERSION', '1.1.0' );
+define( 'POC_SUIVI_VERSION', '1.1.1' );
 
 /* ════════════════════════════════════════════════════════════════════════════
    CLASSE PRINCIPALE
@@ -97,7 +97,7 @@ class POC_Suivi_Demandes {
                 'label'  => 'Réparation impossible',
                 'statut' => 'mail_irreparable',
                 'objet'  => 'Votre raquette {modele} – retour sur la réparation',
-                'corps'  => "Bonjour,\n\nMerci pour votre demande concernant votre raquette {modele}.\n\nMalheureusement, d'après vos photos, les dommages ne permettent pas une réparation fiable : [À COMPLÉTER : raison].\n\nSi vous le souhaitez, nous pouvons vous faire une offre de reprise sur cette raquette, ou vous proposer une raquette d'occasion révisée de notre boutique. Répondez simplement à ce mail." . $signature,
+                'corps'  => "Bonjour,\n\nMerci pour votre demande concernant votre raquette {modele}.\n\nMalheureusement, d'après vos photos, les dommages ne permettent pas une réparation fiable : [À COMPLÉTER : raison].\n\nNous préférons vous le dire franchement plutôt que de vous facturer une réparation qui ne tiendrait pas dans le temps.\n\nSi vous cherchez une nouvelle raquette, vous trouverez sur padeloccas.fr des raquettes d'occasion contrôlées et révisées. N'hésitez pas à répondre à ce mail si vous voulez un conseil sur le modèle qui vous conviendrait." . $signature,
             ],
             'reprise' => [
                 'label'  => 'Offre de reprise',
