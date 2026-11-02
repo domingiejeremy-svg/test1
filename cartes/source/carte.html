@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Carte merci — Padel Occas</title>
+<link rel="stylesheet" href="fonts-local.css">
+<style>
+  :root {
+    --nuit: #060A2A; --navy: #0D124B; --navy-2: #1B2470;
+    --orange: #F2921C; --orange-ink: #CE7809; --orange-soft: #FEF3E3;
+    --neon-clair: #8AA4FF; --ink: #1B1F3A; --muted: #5A6080; --line: #DFE4E9;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 210mm; height: 297mm; background: #fff; }
+  body { font-family: "IBM Plex Sans", sans-serif; color: var(--ink);
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .sheet { position: relative; width: 210mm; height: 297mm;
+           display: grid; grid-template-columns: repeat(2, 97mm); grid-template-rows: repeat(2, 140mm);
+           justify-content: center; align-content: center; }
+  /* traits de coupe */
+  .sheet::before, .sheet::after { content: ""; position: absolute; background: none; }
+  .sheet::before { left: 50%; top: 0; bottom: 0; border-left: .2mm dashed #C9CED8; }
+  .sheet::after  { top: 50%; left: 0; right: 0; border-top: .2mm dashed #C9CED8; }
+  .card { position: relative; z-index: 1; width: 97mm; height: 140mm; padding: 4mm; background: #fff; }
+  .inner { height: 100%; border-radius: 4mm; overflow: hidden; display: flex; flex-direction: column;
+           border: .3mm solid var(--line); }
+
+  /* bandeau */
+  .head { background: var(--nuit); padding: 5mm 6mm 4.5mm; display: flex; align-items: center; gap: 2.5mm; }
+  .head img { width: 9mm; height: 9mm; border-radius: 50%; }
+  .logo { font-family: "Archivo", sans-serif; font-weight: 800; font-size: 5.2mm; letter-spacing: -.045em;
+          color: #fff; font-stretch: 112%; }
+  .logo em { font-style: normal; color: var(--neon-clair); }
+
+  .body { flex: 1; padding: 6mm 6.5mm 0; display: flex; flex-direction: column; }
+  .rang { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 2.5mm; letter-spacing: .08em;
+          text-transform: uppercase; color: var(--orange-ink); }
+  .rang span { display: inline-block; min-width: 11mm; border-bottom: .3mm solid var(--orange-ink); margin: 0 .5mm; }
+  h1 { font-family: "Archivo", sans-serif; font-weight: 900; font-stretch: 115%; font-size: 13mm; line-height: .95;
+       letter-spacing: -.04em; color: var(--navy); margin: 2.5mm 0 3.5mm; }
+  h1 .point { color: var(--orange); }
+  p { font-size: 3.15mm; line-height: 1.5; color: var(--ink); }
+  p + p { margin-top: 2mm; }
+  .sign { font-style: italic; color: var(--muted); margin-top: 2.5mm; font-size: 3.1mm; }
+  .sign b { font-style: normal; font-weight: 600; color: var(--navy); }
+
+  /* bon de réduction */
+  .bon { margin: auto 6.5mm 0; border: .5mm dashed var(--orange); border-radius: 3mm; background: var(--orange-soft);
+         padding: 3.5mm 4mm 3.2mm; text-align: center; }
+  .bon .titre { font-family: "Archivo", sans-serif; font-weight: 800; font-stretch: 110%; font-size: 4.3mm;
+                color: var(--navy); letter-spacing: -.02em; line-height: 1.15; }
+  .bon .titre b { color: var(--orange-ink); font-weight: 900; }
+  .bon .code { display: inline-block; margin-top: 2.2mm; padding: 1.4mm 3.5mm; border-radius: 1.6mm; background: var(--navy);
+               font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 4.4mm; letter-spacing: .14em; color: #fff; }
+  .bon .site { margin-top: 1.8mm; font-size: 2.9mm; font-weight: 600; color: var(--navy); }
+  .foot { padding: 2.6mm 6.5mm 4mm; font-size: 2.25mm; line-height: 1.4; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <!--CARD-->
+</div>
+<template id="card">
+  <div class="card"><div class="inner">
+    <div class="head"><img src="logo-mark.png" alt=""><div class="logo">PADEL<em>OCCAS</em></div></div>
+    <div class="body">
+      <div class="rang">Client n°<span></span>sur les 100 premiers</div>
+      <h1>Merci<span class="point">.</span></h1>
+      <p>Vous faites partie des 100 premiers clients de Padel&nbsp;Occas, et ça compte énormément pour nous.</p>
+      <p>Chaque raquette qui part, on l’a contrôlée, pesée et emballée nous-mêmes. Qu’elle vous accompagne longtemps sur le terrain !</p>
+      <p class="sign">Bon jeu, <b>Jérémy &amp; Mathieu</b></p>
+    </div>
+    <div class="bon">
+      <div class="titre"><b>10 € offerts</b> sur votre<br>prochaine commande</div>
+      <div class="code">PREMIERS100</div>
+      <div class="site">padeloccas.fr</div>
+    </div>
+    <div class="foot">Code valable une fois par client, non cumulable.<br>Une question ? contact@padeloccas.fr</div>
+  </div></div>
+</template>
+<script>
+  const t = document.getElementById('card').innerHTML, s = document.querySelector('.sheet');
+  s.innerHTML = t.repeat(4);
+</script>
+</body>
+</html>
