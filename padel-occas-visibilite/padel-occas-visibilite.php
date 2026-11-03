@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Visibilité IA et moteurs
  * Description: llms.txt, IndexNow (Bing, ChatGPT), FAQ structurées lues dans le contenu des pages, description SEO des nouvelles pages et question « Comment nous avez-vous connus ? » au paiement.
- * Version:     1.0.1
+ * Version:     1.1.1
  * Author:      Padel Occas
  * License:     GPL v2 or later
  */
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    ════════════════════════════════════════════════════════════════════════════ */
 class POC_Visibilite {
 
-    const VERSION      = '1.0.1';
+    const VERSION      = '1.1.1';
     const INDEXNOW_KEY = 'd6ce2802a50793899c9855035e542a3d';
     const SOURCE_FIELD = 'padeloccas/source';
 
@@ -37,13 +37,31 @@ class POC_Visibilite {
         add_action( 'transition_post_status', [ $this, 'indexnow_on_publish' ], 10, 3 );
         add_action( 'woocommerce_init',  [ $this, 'register_source_field' ] );
         add_action( 'init',              [ $this, 'purge_cache_once' ], 20 );
+        add_action( 'template_redirect', [ $this, 'redirect_missing_model' ] );
     }
 
-    /** Vide le cache LiteSpeed des fichiers texte une fois par version (un 404 a pu y rester) */
+    /**
+     * Une fiche modèle /raquette/<slug>/ qui n'existe pas (modèle jamais créé ou retiré)
+     * renvoie vers la page de sa marque si elle existe, sinon vers la boutique, au lieu d'une 404.
+     */
+    public function redirect_missing_model() {
+        if ( ! is_404() ) return;
+        $path = trim( (string) wp_parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+        if ( ! preg_match( '#^raquette/([a-z0-9-]+)$#', $path, $m ) ) return;
+
+        $marque = strtok( $m[1], '-' );
+        $term   = taxonomy_exists( 'product_brand' ) ? get_term_by( 'slug', $marque, 'product_brand' ) : false;
+        $cible  = ( $term && ! is_wp_error( $term ) ) ? get_term_link( $term ) : home_url( '/boutique/' );
+
+        wp_safe_redirect( is_wp_error( $cible ) ? home_url( '/boutique/' ) : $cible, 301, 'Padel Occas' );
+        exit;
+    }
+
+    /** Vide le cache LiteSpeed une fois par version du snippet */
     public function purge_cache_once() {
         if ( get_option( 'poc_visibilite_purged' ) === self::VERSION ) return;
-        do_action( 'litespeed_purge_url', home_url( '/llms.txt' ) );
-        do_action( 'litespeed_purge_url', home_url( '/' . self::INDEXNOW_KEY . '.txt' ) );
+        // Tout le cache : d'anciennes 404 (llms.txt, fiches modèles redirigées) ont pu y rester
+        do_action( 'litespeed_purge_all' );
         update_option( 'poc_visibilite_purged', self::VERSION, false );
     }
 
