@@ -1,6 +1,6 @@
 # Google Ads — Calendrier de l'Avent Padel Occas
 
-Pourquoi ça vaut le coup : environ 210 recherches par mois sur « calendrier de l'avent padel », à 0,15 € le clic environ, avec une concurrence faible. Ces gens cherchent exactement notre produit. Le volume est petit (quelques clics par jour) : Google Ads vient **en plus** de Meta, pas à la place.
+Pourquoi ça vaut le coup : environ 210 recherches par mois sur « calendrier de l'avent padel », à 0,15 € le clic environ, avec une concurrence faible. Ces gens cherchent exactement notre produit. En novembre et décembre, s'y ajoutent toutes les recherches de cadeaux (« cadeau padel », « noël padel »…), beaucoup plus nombreuses. Google Ads est le **canal principal** de la campagne ; Meta est en option.
 
 ## 1. Avant de lancer : le suivi des ventes
 
@@ -11,13 +11,15 @@ Dans WordPress → **Marketing → Google** (extension Google for WooCommerce, d
 - Nouvelle campagne → objectif **Ventes** → type **Réseau de Recherche**.
 - Décocher **Réseau Display** et **Partenaires du Réseau de Recherche**.
 - Lieu : **France**. Langue : **français**.
-- Budget : **5 € par jour** (montable à 10 € si ça vend).
+- Budget : **10 € par jour** pour toute la campagne (les deux groupes se le partagent).
 - Enchères : **Maximiser les clics** avec un CPC maximum de **0,60 €** pour démarrer. Après 10 à 15 ventes, passer en **Maximiser les conversions**.
 - Fin : **25 novembre**.
 
-## 3. Mots-clés
+## 3. Deux groupes d'annonces
 
-Saisis-les avec les guillemets et les crochets, ils règlent la précision du ciblage.
+Saisis les mots-clés avec les guillemets et les crochets, ils règlent la précision du ciblage.
+
+**Groupe 1 · « Calendrier »** : les gens qui cherchent déjà un calendrier.
 
 ```
 [calendrier de l'avent padel]
@@ -25,12 +27,26 @@ Saisis-les avec les guillemets et les crochets, ils règlent la précision du ci
 "calendrier de l'avent padel"
 "calendrier avent padel"
 "calendrier de l'avent raquette"
-"cadeau padel noel"
-"idée cadeau padel"
-"cadeau joueur de padel"
+"calendrier de l'avent sport"
+"calendrier de l'avent sportif"
 ```
 
-**Mots-clés à exclure** (onglet « Mots-clés à exclure ») :
+**Groupe 2 · « Cadeau padel »** : les gens qui cherchent un cadeau pour un joueur ou une joueuse.
+
+```
+"cadeau padel"
+"idée cadeau padel"
+"cadeau noel padel"
+"noel padel"
+"cadeau joueur de padel"
+"cadeau joueuse de padel"
+"cadeau padel homme"
+"cadeau padel femme"
+"cadeau padel original"
+"accessoire padel cadeau"
+```
+
+**Mots-clés à exclure** (au niveau de la campagne) :
 
 ```
 gratuit
@@ -38,9 +54,12 @@ diy
 fabriquer
 tuto
 emploi
-occasion
 tennis
+carte cadeau
+bon cadeau
 ```
+
+Pour le groupe 2, les titres à épingler en position 1 et 2 : « Le Cadeau de Noël du Padel » et « + de 130 € de Matériel ». Le reste de l'annonce est identique.
 
 ## 4. L'annonce (annonce responsive)
 
@@ -79,4 +98,5 @@ Le calendrier peut aussi apparaître dans l'onglet Shopping avec sa photo et son
 ## 6. Règles
 
 - **Dès que les 30 premiers sont vendus**, il faut retirer les titres « 79 € pour les 30 Premiers » et la description 2, et passer le prix à 89 €.
-- Une fois par semaine, regarde le rapport **« Termes de recherche »** et exclus ce qui n'a rien à voir.
+- **Les 3 premiers jours, regarde chaque soir le rapport « Termes de recherche »** et exclus ce qui n'a rien à voir (par exemple « raquette padel pas cher » : la personne veut une raquette, pas un calendrier). Ensuite, une fois par semaine.
+- Si le groupe 2 dépense plus de 25 € sans vente alors que le groupe 1 vend, mets le groupe 2 en pause.
