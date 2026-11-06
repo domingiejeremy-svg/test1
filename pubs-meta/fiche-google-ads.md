@@ -4,7 +4,7 @@ Pourquoi ça vaut le coup : environ 210 recherches par mois sur « calendrier de
 
 ## 1. Avant de lancer : le suivi des ventes
 
-Dans WordPress → **Marketing → Google** (extension Google for WooCommerce, déjà installée) → **connecter le compte Google Ads**. L'extension crée elle-même la conversion « Achat ». Sans ça, Google ne sait pas quelles pubs vendent.
+Dans Google Ads : **Objectifs → Conversions → + Créer une action de conversion → Site Web** → `padeloccas.fr` → **Ajouter manuellement** : catégorie **Achat**, nom **Achat site**, valeur « différentes valeurs pour chaque conversion » (79 € par défaut), comptabilisation **Chaque conversion**. Puis **Installer la balise vous-même** : noter l'**ID de conversion** (`AW-…`) et le **libellé**, et les transmettre à Claude (conversation du site), qui installe le suivi sur le site, derrière le bandeau cookies. (On n'utilise pas l'extension Google for WooCommerce : sa connexion bloque sur la clé d'accès Google.)
 
 ## 2. Campagne
 
