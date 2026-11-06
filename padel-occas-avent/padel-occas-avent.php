@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Padel Occas — Prévente Calendrier de l'Avent
- * Description: Prix de lancement automatique (79 € pour les 30 premiers, puis 89 €), compteur sur 50, vente jusqu'à épuisement, point relais seul et offert, grille des 24 sachets, lien d'aperçu secret, mise en avant accueil + menu.
- * Version:     1.1.0
+ * Description: Prix de lancement automatique (79 € pour les 30 premiers, puis 89 €), compteur sur 100, vente jusqu'à épuisement, point relais seul et offert, grille des 24 sachets, lien d'aperçu secret, mise en avant accueil + menu.
+ * Version:     1.2.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  */
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class POC_Avent_Config {
     const SKU            = 'CAL-AVENT-2026';
     const PAGE_SLUG      = 'calendrier-avent-padel';
-    const TOTAL          = 50;                     // exemplaires
+    const TOTAL          = 100;                    // exemplaires (pour augmenter : changer ici ET le stock du produit du même nombre)
     const LANCEMENT_QTE  = 30;                     // les N premiers au prix de lancement
     const PRIX_LANCEMENT = 79;
     const PRIX           = 89;                     // affiché seulement une fois les N premiers vendus
@@ -272,7 +272,7 @@ class POC_Avent {
     public function home_banner() {
         if ( ! is_front_page() || ! self::show_promo() ) return;
         printf(
-            '<a class="poc-av-bandeau" href="%s"><span class="poc-av-bandeau__tag">Prévente</span> <span>Calendrier de l’Avent Padel Occas : 24 objets de padel, 50 exemplaires</span> <span class="poc-av-bandeau__cta">Découvrir</span></a>',
+            '<a class="poc-av-bandeau" href="%s"><span class="poc-av-bandeau__tag">Prévente</span> <span>Calendrier de l’Avent Padel Occas : 24 objets de padel, ' . (int) POC_Avent_Config::TOTAL . ' exemplaires</span> <span class="poc-av-bandeau__cta">Découvrir</span></a>',
             esc_url( self::page_url() )
         );
     }
@@ -346,7 +346,7 @@ class POC_Avent {
 
     private function buy_form( $p ) {
         if ( self::sold() >= POC_Avent_Config::TOTAL || ! $p->is_in_stock() ) {
-            return '<p class="poc-av-statut">Les 50 calendriers sont réservés. Merci !</p>';
+            return '<p class="poc-av-statut">Les ' . (int) POC_Avent_Config::TOTAL . ' calendriers sont réservés. Merci !</p>';
         }
         $max = min( POC_Avent_Config::MAX_PAR_COMMANDE, POC_Avent_Config::TOTAL - self::sold() );
         $opts = '';
