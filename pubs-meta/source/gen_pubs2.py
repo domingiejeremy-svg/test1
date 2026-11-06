@@ -2,8 +2,8 @@ import sys, random
 P=sys.argv[1]
 random.seed(12)
 angles={
- 'pour-vous':{'eyebrow':'Calendrier de l’Avent · 1er → 24 décembre','titre':'Le compte à rebours<br>de Noël, version padel.','sous':'Un vrai objet de padel derrière chaque numéro<br>Plus de 130&nbsp;€ de matériel'},
- 'cadeau':{'eyebrow':'Idée cadeau de Noël','titre':'Le cadeau de Noël<br>des joueurs de padel.','sous':'24 surprises à ouvrir en décembre<br>Livré avant le 1er&nbsp;décembre'},
+ 'pour-vous':{'eyebrow':'Du 1er au 24 décembre','titre':'Le calendrier de l’Avent<br>des joueurs de <span class="p">padel</span>.','sous':'Un vrai objet de padel dans chaque sachet<br>Plus de 130&nbsp;€ de matériel'},
+ 'cadeau':{'eyebrow':'Idée cadeau de Noël','titre':'Le cadeau de Noël<br>des joueurs de <span class="p">padel</span>.','sous':'24 surprises de padel à ouvrir en décembre<br>Livré avant le 1er&nbsp;décembre'},
 }
 formats={'carre':(1080,1080),'4x5':(1080,1350),'story':(1080,1920)}
 sizes={
@@ -42,20 +42,57 @@ def sprig(x,y,scale,rot,flip=1):
     for (bx,by) in [(70,-28),(150,-48),(195,-30)]:
         g+=f'<circle cx="{bx}" cy="{by}" r="9" fill="#C8102E"/><circle cx="{bx-3}" cy="{by-3}" r="3" fill="#fff" opacity=".5"/>'
     return g+'</g>'
+def court(w,h,hz):
+    # sol bleu en perspective, lignes blanches, vitres latérales, filet, projecteurs
+    cx=w/2; top_w=w*0.34; bot_w=w*1.5; y0=hz; y1=h+40
+    def X(t,side): # t : 0 en haut, 1 en bas ; side -1 / +1
+        half=top_w/2+(bot_w/2-top_w/2)*t
+        return cx+side*half
+    s=f'<defs><linearGradient id="sol" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1D4FC4"/><stop offset="1" stop-color="#2F6BFF"/></linearGradient>'
+    s+='<linearGradient id="vitre" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FC0FF" stop-opacity=".22"/><stop offset="1" stop-color="#9FC0FF" stop-opacity=".06"/></linearGradient>'
+    s+='<linearGradient id="voile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#060A2A" stop-opacity="0"/><stop offset=".45" stop-color="#060A2A" stop-opacity=".55"/><stop offset="1" stop-color="#060A2A" stop-opacity=".82"/></linearGradient>'
+    s+='<radialGradient id="spot"><stop offset="0" stop-color="#FFF6DA" stop-opacity=".95"/><stop offset="1" stop-color="#FFF6DA" stop-opacity="0"/></radialGradient></defs>'
+    # mur du fond (vitre) + sol
+    s+=f'<rect x="{X(0,-1):.0f}" y="{y0-h*0.13:.0f}" width="{top_w:.0f}" height="{h*0.13:.0f}" fill="url(#vitre)" stroke="#BFD3FF" stroke-opacity=".35" stroke-width="2"/>'
+    s+=f'<path d="M{X(0,-1):.0f} {y0} L{X(0,1):.0f} {y0} L{X(1,1):.0f} {y1} L{X(1,-1):.0f} {y1} Z" fill="url(#sol)"/>'
+    # vitres latérales
+    for side in (-1,1):
+        s+=f'<path d="M{X(0,side):.0f} {y0} L{X(0,side):.0f} {y0-h*0.13:.0f} L{X(1,side)+side*0:.0f} {y1-h*0.75:.0f} L{X(1,side):.0f} {y1} Z" fill="url(#vitre)" stroke="#BFD3FF" stroke-opacity=".3" stroke-width="2"/>'
+        for k in range(1,5):
+            t=k/5; xa=X(t,side); ya=y0+(y1-y0)*t
+            s+=f'<line x1="{xa:.0f}" y1="{ya:.0f}" x2="{xa:.0f}" y2="{ya-(h*0.13+(h*0.75-h*0.13)*t):.0f}" stroke="#C9D7F5" stroke-opacity=".35" stroke-width="3"/>'
+    # lignes du terrain
+    ln='stroke="#FFFFFF" stroke-opacity=".85" stroke-width="4" fill="none"'
+    s+=f'<path d="M{X(0,-1):.0f} {y0} L{X(1,-1):.0f} {y1} M{X(0,1):.0f} {y0} L{X(1,1):.0f} {y1}" {ln}/>'
+    for t in (0.18,0.82):
+        ya=y0+(y1-y0)*t; s+=f'<line x1="{X(t,-1):.0f}" y1="{ya:.0f}" x2="{X(t,1):.0f}" y2="{ya:.0f}" {ln}/>'
+    s+=f'<line x1="{cx:.0f}" y1="{y0+(y1-y0)*0.18:.0f}" x2="{cx:.0f}" y2="{y0+(y1-y0)*0.82:.0f}" {ln}/>'
+    # filet
+    tn=0.5; yn=y0+(y1-y0)*tn; xl=X(tn,-1); xr=X(tn,1); nh=h*0.06
+    s+=f'<rect x="{xl:.0f}" y="{yn-nh:.0f}" width="{xr-xl:.0f}" height="{nh:.0f}" fill="#0A0F33" fill-opacity=".55"/>'
+    for i in range(0,int((xr-xl)/14)): s+=f'<line x1="{xl+i*14:.0f}" y1="{yn-nh:.0f}" x2="{xl+i*14:.0f}" y2="{yn:.0f}" stroke="#E8EEFF" stroke-opacity=".25" stroke-width="1"/>'
+    s+=f'<line x1="{xl:.0f}" y1="{yn-nh:.0f}" x2="{xr:.0f}" y2="{yn-nh:.0f}" stroke="#FFFFFF" stroke-width="5"/>'
+    # projecteurs
+    for fx in (X(0,-1)-40, X(0,1)+40):
+        s+=f'<circle cx="{fx:.0f}" cy="{y0-h*0.2:.0f}" r="{w*0.16:.0f}" fill="url(#spot)" opacity=".35"/><rect x="{fx-26:.0f}" y="{y0-h*0.2-8:.0f}" width="52" height="16" rx="4" fill="#F7F3E6"/>'
+    # voile sombre pour la lisibilité du texte
+    s+=f'<rect x="0" y="{y0:.0f}" width="{w}" height="{h-y0+40:.0f}" fill="url(#voile)"/>'
+    return s
 CSS='''@font-face{font-family:Archivo;src:url(archivo.woff2);font-weight:400 900;font-stretch:62% 125%}
 @font-face{font-family:PlexMono;src:url(plexmono.woff2);font-weight:600}
 @font-face{font-family:PlexSans;src:url(plexsans.woff2);font-weight:400 700}
 *{box-sizing:border-box;margin:0}html,body{width:{w}px;height:{h}px;overflow:hidden;background:#060A2A}
-.c{position:relative;width:{w}px;height:{h}px;background:radial-gradient(ellipse 75% 55% at 50% 42%,#1B2470 0%,#0B1140 45%,#060A2A 80%);overflow:hidden}
+.c{position:relative;width:{w}px;height:{h}px;background:linear-gradient(#060A2A,#0B1140 40%,#060A2A);overflow:hidden}
 svg.deco{position:absolute;inset:0;z-index:1}
 .in{position:relative;z-index:2;padding-top:{top}px;display:flex;flex-direction:column;align-items:center}
 .photo{width:{ph}px;height:{ph}px;border-radius:26px;overflow:hidden;border:6px solid #F5E6C8;box-shadow:0 0 0 2px rgba(245,194,107,.6),0 22px 60px rgba(0,0,0,.55),0 0 80px rgba(255,190,90,.18);flex:none}
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
 .nc{margin-top:8px;font-family:PlexSans;font-size:15px;color:#8C93B0}
 .txt{text-align:center;margin-top:{gap}px;padding:0 50px}
-.eyebrow{font-family:PlexMono;font-weight:600;font-size:{eb}px;letter-spacing:.1em;text-transform:uppercase;color:#F5C26B}
-h1{font-family:Archivo;font-weight:800;font-variation-settings:"wdth" 112;font-size:{t}px;line-height:1;letter-spacing:-.03em;color:#fff;margin:{m1}px 0 {m2}px;text-shadow:0 2px 24px rgba(0,0,0,.4)}
-.sous{font-family:PlexSans;font-size:{s}px;line-height:1.35;color:#D5DAEC}
+.eyebrow{display:inline-block;font-family:PlexMono;font-weight:600;font-size:{eb}px;letter-spacing:.1em;text-transform:uppercase;color:#060A2A;background:#F5C26B;border-radius:999px;padding:6px 16px}
+h1{font-family:Archivo;font-weight:800;font-variation-settings:"wdth" 112;font-size:{t}px;line-height:1;letter-spacing:-.03em;color:#fff;margin:{m1}px 0 {m2}px;text-shadow:0 3px 18px rgba(0,0,0,.7)}
+h1 .p{color:#FC9A20}
+.sous{font-family:PlexSans;font-size:{s}px;line-height:1.35;color:#EEF1FA;text-shadow:0 2px 10px rgba(0,0,0,.7)}
 .prix{display:inline-flex;align-items:center;gap:12px;margin-top:{m3}px;background:#FC9A20;color:#060A2A;border-radius:999px;padding:13px 28px;font-family:Archivo;font-weight:800;font-variation-settings:"wdth" 112;font-size:{p}px;box-shadow:0 8px 30px rgba(252,154,32,.35)}
 .prix small{font-family:PlexSans;font-weight:600;font-size:{ps}px}
 .logo{margin-top:{lg}px;display:flex;align-items:center;gap:10px;font-family:Archivo;font-weight:800;font-variation-settings:"wdth" 112;font-size:26px;letter-spacing:-.045em;color:#fff}
@@ -66,7 +103,7 @@ for a,tx in angles.items():
         for k,v in d.items(): css=css.replace('{'+k+'}',str(v))
         gy={'carre':38,'4x5':44,'story':250}[f]
         deco=f'''<svg class="deco" viewBox="0 0 {w} {h}" width="{w}" height="{h}"><defs><radialGradient id="halo"><stop offset="0" stop-color="#FFD27A" stop-opacity=".9"/><stop offset="1" stop-color="#FFD27A" stop-opacity="0"/></radialGradient></defs>
-{snow(w,h,int(w*h/9000))}{garland(w,gy,26,11)}
+{court(w,h,{'carre':300,'4x5':360,'story':720}[f])}{snow(w,h,int(w*h/11000))}{garland(w,gy,26,11)}
 {sprig(-30,h-40,1.25,-18)}{sprig(w+30,h-40,1.25,-18,-1)}</svg>'''
         html=f'''<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>{css}</style></head><body><div class="c">{deco}<div class="in">
 <div class="photo"><img src="calendrier.jpg" alt=""></div><div class="nc">Visuel non contractuel</div>
