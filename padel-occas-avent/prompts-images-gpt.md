@@ -12,7 +12,7 @@ Fond uni gris très clair légèrement bleuté (#EEF0F3), lumière douce et diff
 Cadrage frontal, tout le calendrier visible avec une marge autour.
 Aucun autre texte, aucun logo de marque, aucune personne, aucune décoration de Noël autre qu'une petite branche de sapin discrète posée en bas à droite.
 
-## Image 2 — le jour 24
+## Image 2 — le jour 24 (plus utilisée : le contenu du 24 n'est plus dévoilé sur le site)
 
 Photo produit réaliste, style studio e-commerce, format carré, posée sur une surface gris très clair (#EEF0F3) avec un fond uni identique.
 Au centre, un sachet en papier kraft brun plus grand que les autres, au haut replié et fermé par une pince à linge en bois, avec un autocollant rond : une balle de padel orange vif (#FC9A20) aux coutures blanches et le numéro « 24 » en chiffres très gras bleu nuit (#060A2A).

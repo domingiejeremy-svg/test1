@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Prévente Calendrier de l'Avent
  * Description: Prix de lancement automatique (79 € pour les 30 premiers, puis 89 €), compteur sur 100, vente jusqu'à épuisement, point relais seul et offert, grille des 24 sachets, lien d'aperçu secret, mise en avant accueil + menu.
- * Version:     1.2.0
+ * Version:     1.3.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  */
@@ -18,13 +18,13 @@ class POC_Avent_Config {
     const TOTAL          = 100;                    // exemplaires (pour augmenter : changer ici ET le stock du produit du même nombre)
     const LANCEMENT_QTE  = 30;                     // les N premiers au prix de lancement
     const PRIX_LANCEMENT = 79;
-    const PRIX           = 89;                     // affiché seulement une fois les N premiers vendus
+    const PRIX           = 89;                     // prix après les N premiers
     const EXPEDITION     = '2026-11-26';           // commandes passées avant : expédiées ce jour-là au plus tard
     const MAX_PAR_COMMANDE = 5;
 
     // Interrupteurs. Mettre true au moment de publier, false pour retirer.
     const MISE_EN_AVANT  = false;  // bandeau sur l'accueil + lien dans le menu principal
-    const VALEUR_VALIDEE = false;  // bloc « plus de 130 € de matériel »
+    const VALEUR_VALIDEE = true;   // bloc « plus de 130 € de matériel » (chiffre confirmé)
     const VALEUR_TEXTE   = 'Plus de 130 € de matériel'; // pour mémoire
 
     // Lien d'aperçu secret : /?page_id=<ID>&apercu=<jeton> (et /?apercu=<jeton> pour l'accueil)
@@ -150,7 +150,7 @@ class POC_Avent {
     public function price_html( $html, $product ) {
         if ( ! self::is_calendar( $product ) ) return $html;
         if ( self::launch_left() > 0 ) {
-            return sprintf( '%s <small>prix de lancement réservé aux %d premiers</small>', self::eur( POC_Avent_Config::PRIX_LANCEMENT ), POC_Avent_Config::LANCEMENT_QTE );
+            return sprintf( '%s <small>prix de lancement réservé aux %d premiers, puis %s</small>', self::eur( POC_Avent_Config::PRIX_LANCEMENT ), POC_Avent_Config::LANCEMENT_QTE, self::eur( POC_Avent_Config::PRIX ) );
         }
         return self::eur( POC_Avent_Config::PRIX );
     }
@@ -316,11 +316,11 @@ class POC_Avent {
           <div class="poc-av-hero__infos">
             <p class="poc-av-eyebrow">Prévente · Série limitée de <?php echo (int) $total; ?> exemplaires numérotés</p>
             <h1>Calendrier de l’Avent Padel&nbsp;Occas</h1>
-            <p class="poc-av-lead">24 sachets kraft numérotés à accrocher, avec un vrai objet de padel dans chacun. Le 24 : un tube de 3 balles neuves et un bon d’achat de 15&nbsp;€ sur une raquette d’occasion.</p>
+            <p class="poc-av-lead">24 sachets kraft numérotés à accrocher, avec un vrai objet de padel dans chacun, et plus de 130&nbsp;€ de matériel au total.</p>
 
             <div class="poc-av-prix">
               <span class="poc-av-prix__montant"><?php echo esc_html( self::eur( self::unit_price() ) ); ?></span>
-              <?php if ( $left > 0 ) : ?><span class="poc-av-prix__note">prix de lancement réservé aux <?php echo (int) POC_Avent_Config::LANCEMENT_QTE; ?> premiers</span><?php endif; ?>
+              <?php if ( $left > 0 ) : ?><span class="poc-av-prix__note">prix de lancement réservé aux <?php echo (int) POC_Avent_Config::LANCEMENT_QTE; ?> premiers, puis <?php echo esc_html( self::eur( POC_Avent_Config::PRIX ) ); ?></span><?php endif; ?>
             </div>
 
             <div class="poc-av-compteur">
@@ -367,12 +367,12 @@ class POC_Avent {
         );
     }
 
-    /** 24 balles numérotées ; seul le 24 est dévoilé (le contenu des autres reste une surprise) */
+    /** 24 balles numérotées : le contenu reste une surprise, le 24 est mis en valeur */
     public function sc_grille() {
         $out = '<ol class="poc-av-grille" aria-label="Les 24 sachets du calendrier">';
         for ( $n = 1; $n <= 24; $n++ ) {
             $out .= 24 === $n
-                ? '<li class="poc-av-jour poc-av-jour--24">' . self::ball( 24 ) . '<span class="poc-av-jour__objet">3 balles + bon de 15&nbsp;€</span></li>'
+                ? '<li class="poc-av-jour poc-av-jour--24">' . self::ball( 24 ) . '<span class="screen-reader-text">Sachet 24 : surprise</span></li>'
                 : sprintf( '<li class="poc-av-jour">%s<span class="screen-reader-text">Sachet %d : surprise</span></li>', self::ball( $n ), $n );
         }
         return $out . '</ol>';
