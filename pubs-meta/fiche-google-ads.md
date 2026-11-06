@@ -1,6 +1,6 @@
 # Google Ads — Calendrier de l'Avent Padel Occas
 
-Pourquoi ça vaut le coup : environ 210 recherches par mois sur « calendrier de l'avent padel », à 0,15 € le clic environ, avec une concurrence faible. Ces gens cherchent exactement notre produit. En novembre et décembre, s'y ajoutent toutes les recherches de cadeaux (« cadeau padel », « noël padel »…), beaucoup plus nombreuses. Google Ads est le **canal principal** de la campagne ; Meta est en option.
+Pourquoi ça vaut le coup : environ 210 recherches par mois sur « calendrier de l'avent padel », à 0,15 € le clic environ, avec une concurrence faible. Ces gens cherchent exactement notre produit. En novembre et décembre, s'y ajoutent toutes les recherches de cadeaux (« cadeau padel », « noël padel »…), beaucoup plus nombreuses. On fait la campagne **uniquement sur Google Ads** (pas de Meta).
 
 ## 1. Avant de lancer : le suivi des ventes
 
