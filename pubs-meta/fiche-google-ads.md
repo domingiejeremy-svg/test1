@@ -79,12 +79,17 @@ Pour le groupe 2, les titres à épingler en position 1 et 2 : « Le Cadeau de N
 10. Série Limitée à 100
 11. Réservez le Vôtre
 12. Padel Occas
+13. Une Raquette à 400 € à Gagner
 
 **Descriptions** :
 1. 24 sachets, un vrai objet de padel dans chacun : plus de 130 € de matériel.
 2. 79 € pour les 30 premiers, puis 89 €. Livré en point relais avant le 1er décembre.
 3. Le cadeau de Noël idéal pour un joueur ou une joueuse de padel. Série limitée.
 4. Préparé par Padel Occas, sachet par sachet. Point relais Mondial Relay offert.
+
+*Description de remplacement à mettre à la place de la 4 :* Bonus : 1 calendrier = 1 chance de gagner une raquette à 400 €, tirée le 24 décembre.
+
+On ne met pas « adidas » dans les annonces : Google refuse souvent les marques d'autres sociétés dans le texte des pubs. La marque est détaillée sur la page de vente.
 
 **Éléments à ajouter** :
 - **Images** : `padel-occas-pub-noel-pour-vous-carre.jpg` et `padel-occas-pub-noel-pour-vous-4x5.jpg`.

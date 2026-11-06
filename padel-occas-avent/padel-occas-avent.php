@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Prévente Calendrier de l'Avent
  * Description: Prix de lancement automatique (79 € pour les 30 premiers, puis 89 €), compteur sur 100, vente jusqu'à épuisement, point relais seul et offert, grille des 24 sachets, lien d'aperçu secret, mise en avant accueil + menu.
- * Version:     1.4.0
+ * Version:     1.5.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  */
@@ -27,6 +27,14 @@ class POC_Avent_Config {
     const MISE_EN_AVANT  = true;   // bandeau sur l'accueil + lien dans le menu principal (false pour retirer)
     const VALEUR_VALIDEE = true;   // bloc « plus de 130 € de matériel » (chiffre confirmé)
     const VALEUR_TEXTE   = 'Plus de 130 € de matériel'; // pour mémoire
+
+    // Tirage au sort d'une raquette parmi les acheteurs (1 calendrier = 1 participation)
+    const TIRAGE         = true;
+    const TIRAGE_LOT     = 'raquette adidas Metalbone 2026';
+    const TIRAGE_VALEUR  = 400;                    // prix public adidas.fr, novembre 2026
+    const TIRAGE_DATE    = '24 décembre 2026';
+    const TIRAGE_FIN     = '23 décembre 2026 à 23 h 59'; // dernières commandes prises en compte
+    const REGLEMENT_SLUG = 'reglement-tirage-au-sort-calendrier';
 
     // Lien d'aperçu secret : /?page_id=<ID>&apercu=<jeton> (et /?apercu=<jeton> pour l'accueil)
     const APERCU = 'tfr_4MhWFUn95gNzG_2WP1DE';
@@ -85,6 +93,7 @@ class POC_Avent {
         add_shortcode( 'poc_avent_valeur', [ $this, 'sc_valeur' ] );
         add_shortcode( 'poc_avent_visuel', [ $this, 'sc_visuel' ] );
         add_shortcode( 'poc_avent_rappel', [ $this, 'sc_rappel' ] );
+        add_shortcode( 'poc_avent_tirage', [ $this, 'sc_tirage' ] );
     }
 
     /* ── État de la prévente ──────────────────────────────────────────────── */
@@ -225,13 +234,17 @@ class POC_Avent {
 
     public function email_notice( $order, $sent_to_admin, $plain_text, $email = null ) {
         if ( $sent_to_admin || ! $order instanceof WC_Order ) return;
-        $has = false;
+        $has = false; $n = 0;
         foreach ( $order->get_items() as $item ) {
-            if ( (int) $item->get_product_id() === self::product_id() ) { $has = true; break; }
+            if ( (int) $item->get_product_id() === self::product_id() ) { $has = true; $n += (int) $item->get_quantity(); }
         }
         if ( ! $has || ! $email || ! in_array( $email->id, [ 'customer_processing_order', 'customer_on_hold_order' ], true ) ) return;
 
         $txt = 'Calendrier de l’Avent Padel Occas : ' . lcfirst( self::shipping_text() ) . ', en point relais Mondial Relay.';
+        if ( POC_Avent_Config::TIRAGE ) {
+            $txt .= ' ' . sprintf( 'Votre commande vous donne %s au tirage au sort du %s pour gagner une %s (valeur %s).',
+                1 === $n ? '1 participation' : $n . ' participations', POC_Avent_Config::TIRAGE_DATE, POC_Avent_Config::TIRAGE_LOT, self::eur( POC_Avent_Config::TIRAGE_VALEUR ) );
+        }
         if ( $plain_text ) {
             echo "\n" . $txt . "\n\n";
         } else {
@@ -278,7 +291,7 @@ class POC_Avent {
     public function home_banner() {
         if ( ! is_front_page() || ! self::show_promo() ) return;
         printf(
-            '<a class="poc-av-bandeau" href="%s"><span class="poc-av-bandeau__tag">Prévente</span> <span>Calendrier de l’Avent Padel Occas : 24 objets de padel, ' . (int) POC_Avent_Config::TOTAL . ' exemplaires</span> <span class="poc-av-bandeau__cta">Découvrir</span></a>',
+            '<a class="poc-av-bandeau" href="%s"><span class="poc-av-bandeau__tag">Prévente</span> <span>Calendrier de l’Avent Padel Occas : 24 objets de padel' . ( POC_Avent_Config::TIRAGE ? ' + une raquette adidas à gagner' : ', ' . (int) POC_Avent_Config::TOTAL . ' exemplaires' ) . '</span> <span class="poc-av-bandeau__cta">Découvrir</span></a>',
             esc_url( self::page_url() )
         );
     }
@@ -302,7 +315,7 @@ class POC_Avent {
         $prix = self::launch_left() > 0
             ? sprintf( '%s pour les %d premiers', self::eur( POC_Avent_Config::PRIX_LANCEMENT ), POC_Avent_Config::LANCEMENT_QTE )
             : self::eur( POC_Avent_Config::PRIX );
-        return 'Calendrier de l’Avent padel : 24 sachets kraft, un vrai objet de padel dans chacun, plus de 130 € de matériel. ' . $prix . ', point relais offert.';
+        return 'Calendrier de l’Avent padel : 24 sachets kraft, un vrai objet de padel dans chacun, plus de 130 € de matériel' . ( POC_Avent_Config::TIRAGE ? ', et une raquette adidas Metalbone 2026 à gagner' : '' ) . '. ' . $prix . ', point relais offert.';
     }
 
     /** Mobile : barre « prix + Réserver » fixée en bas, masquée quand le bouton principal est à l'écran */
@@ -357,6 +370,10 @@ io.observe(f);if(c)io.observe(c);window.addEventListener('scroll',function(){if(
             <p class="poc-av-eyebrow">Prévente · Série limitée de <?php echo (int) $total; ?> exemplaires numérotés</p>
             <h1>Calendrier de l’Avent Padel&nbsp;Occas</h1>
             <p class="poc-av-lead">24 sachets kraft numérotés à accrocher, avec un vrai objet de padel dans chacun, et plus de 130&nbsp;€ de matériel au total.</p>
+
+            <?php if ( POC_Avent_Config::TIRAGE ) : ?>
+            <a class="poc-av-tirage-mini" href="#tirage"><span class="poc-av-tirage-mini__tag">Bonus</span><span><strong>1 calendrier = 1 chance</strong> de gagner une <?php echo esc_html( POC_Avent_Config::TIRAGE_LOT ); ?> (valeur <?php echo esc_html( self::eur( POC_Avent_Config::TIRAGE_VALEUR ) ); ?>), tirée au sort le <?php echo esc_html( POC_Avent_Config::TIRAGE_DATE ); ?></span></a>
+            <?php endif; ?>
 
             <div class="poc-av-prix">
               <span class="poc-av-prix__montant"><?php echo esc_html( self::eur( self::unit_price() ) ); ?></span>
@@ -434,6 +451,29 @@ io.observe(f);if(c)io.observe(c);window.addEventListener('scroll',function(){if(
         if ( ! $id ) return '';
         return '<figure class="poc-av-fig poc-av-fig--sec">' . wp_get_attachment_image( $id, 'large', false, [ 'loading' => 'lazy' ] )
             . '<figcaption>' . ( $a['legende'] ? esc_html( $a['legende'] ) . ' · ' : '' ) . 'Visuel non contractuel</figcaption></figure>';
+    }
+
+    /** Bloc « raquette à gagner » */
+    public static function reglement_url() {
+        $pg = get_page_by_path( POC_Avent_Config::REGLEMENT_SLUG );
+        return $pg ? get_permalink( $pg ) : home_url( '/' . POC_Avent_Config::REGLEMENT_SLUG . '/' );
+    }
+
+    public function sc_tirage() {
+        if ( ! POC_Avent_Config::TIRAGE ) return '';
+        $c = POC_Avent_Config::class;
+        ob_start(); ?>
+        <section class="poc-av-tirage" id="tirage">
+          <div class="poc-av-tirage__txt">
+            <p class="poc-av-tirage__tag">Tirage au sort le <?php echo esc_html( $c::TIRAGE_DATE ); ?></p>
+            <h2>Et une <?php echo esc_html( $c::TIRAGE_LOT ); ?> à gagner</h2>
+            <p>Chaque calendrier acheté vous donne une participation au tirage au sort d’une <?php echo esc_html( $c::TIRAGE_LOT ); ?> neuve, d’une valeur de <strong><?php echo esc_html( self::eur( $c::TIRAGE_VALEUR ) ); ?></strong>. Deux calendriers, deux chances. Rien d’autre à faire : votre commande suffit.</p>
+            <p class="poc-av-tirage__petit">Commandes jusqu’au <?php echo esc_html( $c::TIRAGE_FIN ); ?>. Le gagnant est prévenu par mail. Tirage organisé par Padel Occas, sans lien avec adidas. <a href="<?php echo esc_url( self::reglement_url() ); ?>">Règlement du tirage au sort</a></p>
+          </div>
+          <div class="poc-av-tirage__valeur" aria-hidden="true"><small>valeur</small><b><?php echo esc_html( self::eur( $c::TIRAGE_VALEUR ) ); ?></b><small>à gagner</small></div>
+        </section>
+        <?php
+        return ob_get_clean();
     }
 
     public function sc_valeur( $atts, $content = '' ) {
@@ -525,6 +565,20 @@ body.po-r .poc-av-barre-fixe a.po-btn{color:var(--av-nuit);text-decoration:none}
 .poc-av-valeur{margin-top:44px;background:var(--av-nuit);color:#fff;border-radius:22px;padding:26px 20px}
 .poc-av-valeur h2{color:#fff}
 .poc-av-valeur p{color:#C9CFE4;margin:0}
+.poc-av-tirage-mini{display:flex;gap:10px;align-items:flex-start;margin:0 0 18px;padding:12px 14px;border-radius:14px;background:#FFF4E5;border:1.5px solid var(--av-orange);color:var(--av-ink)!important;text-decoration:none!important;font-size:14px;line-height:1.45}
+.poc-av-tirage-mini__tag{flex:none;background:var(--av-orange);color:#060A2A;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:3px 9px;margin-top:1px}
+.poc-av-tirage{margin-top:28px;display:flex;gap:20px;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#0D124B,#1D4FC4);color:#fff;border-radius:22px;padding:26px 20px}
+.poc-av-tirage h2{color:#fff;margin:6px 0 10px}
+.poc-av-tirage p{color:#DCE3F7;margin:0 0 10px}
+.poc-av-tirage strong{color:#fff}
+.poc-av-tirage__tag{display:inline-block;background:#F5C26B;color:#060A2A!important;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.08em;border-radius:999px;padding:4px 10px;margin:0!important}
+.poc-av-tirage__petit{font-size:13px}
+.poc-av-tirage__petit a,.poc-av-tirage__petit a:visited{color:#fff!important;text-decoration:underline!important}
+.poc-av-tirage strong,.poc-av-tirage-mini strong{white-space:nowrap}
+.poc-av-tirage__valeur{flex:none;width:118px;height:118px;border-radius:50%;background:#F5C26B;color:#060A2A;border:4px solid #fff;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(8deg);line-height:1}
+.poc-av-tirage__valeur b{font-size:30px;font-weight:900;margin:3px 0}
+.poc-av-tirage__valeur small{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+@media (max-width:600px){.poc-av-tirage{flex-direction:column-reverse;align-items:flex-start}.poc-av-tirage__valeur{width:96px;height:96px}.poc-av-tirage__valeur b{font-size:24px}}
 .poc-av-valeur--avalider{outline:3px dashed var(--av-orange);outline-offset:4px}
 .poc-av-avalider{background:var(--av-orange);color:var(--av-nuit)!important;font-weight:700;border-radius:10px;padding:8px 12px;margin:0 0 14px!important;font-size:14px}
 
