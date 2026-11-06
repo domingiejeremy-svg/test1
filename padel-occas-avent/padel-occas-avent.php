@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Padel Occas — Prévente Calendrier de l'Avent
- * Description: Prix de lancement automatique (79 € pour les 20 premiers, puis 89 €), compteur sur 50, fin de prévente le 19/11 au soir, point relais seul et offert, grille des 24 jours, lien d'aperçu secret, mise en avant accueil + menu.
- * Version:     1.0.0
+ * Description: Prix de lancement automatique (79 € pour les 30 premiers, puis 89 €), compteur sur 50, vente jusqu'à épuisement, point relais seul et offert, grille des 24 sachets, lien d'aperçu secret, mise en avant accueil + menu.
+ * Version:     1.1.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  */
@@ -16,11 +16,10 @@ class POC_Avent_Config {
     const SKU            = 'CAL-AVENT-2026';
     const PAGE_SLUG      = 'calendrier-avent-padel';
     const TOTAL          = 50;                     // exemplaires
-    const LANCEMENT_QTE  = 20;                     // les N premiers au prix de lancement
+    const LANCEMENT_QTE  = 30;                     // les N premiers au prix de lancement
     const PRIX_LANCEMENT = 79;
-    const PRIX           = 89;
-    const SEUIL          = 20;                     // en dessous au 19/11 : prévente annulée et remboursée
-    const FIN            = '2026-11-19 23:59:59';  // heure de Paris
+    const PRIX           = 89;                     // affiché seulement une fois les N premiers vendus
+    const EXPEDITION     = '2026-11-26';           // commandes passées avant : expédiées ce jour-là au plus tard
     const MAX_PAR_COMMANDE = 5;
 
     // Interrupteurs. Mettre true au moment de publier, false pour retirer.
@@ -31,7 +30,7 @@ class POC_Avent_Config {
     // Lien d'aperçu secret : /?page_id=<ID>&apercu=<jeton> (et /?apercu=<jeton> pour l'accueil)
     const APERCU = 'tfr_4MhWFUn95gNzG_2WP1DE';
 
-    /** Contenu contractuel, jour par jour */
+    /** Contenu jour par jour : non affiché sur la page (effet surprise), gardé pour la préparation */
     const JOURS = [
         1 => 'Surgrip', 2 => 'Grip de remplacement', 3 => 'Dragonne de rechange', 4 => 'Poignet éponge',
         5 => 'Chaussettes padel', 6 => 'Deux surgrips', 7 => 'Porte-clés mini-raquette', 8 => 'Protecteur de cadre',
@@ -61,7 +60,6 @@ class POC_Avent {
         add_filter( 'woocommerce_product_get_price',         [ $this, 'filter_price' ], 20, 2 );
         add_filter( 'woocommerce_product_get_regular_price', [ $this, 'filter_price' ], 20, 2 );
         add_filter( 'woocommerce_get_price_html',            [ $this, 'price_html' ], 20, 2 );
-        add_filter( 'woocommerce_is_purchasable',            [ $this, 'is_purchasable' ], 20, 2 );
         add_action( 'woocommerce_before_calculate_totals',   [ $this, 'cart_prices' ], 20 );
         add_filter( 'woocommerce_add_to_cart_validation',    [ $this, 'validate_qty' ], 10, 3 );
         add_filter( 'woocommerce_store_api_product_quantity_maximum', [ $this, 'store_api_max' ], 10, 2 );
@@ -114,13 +112,20 @@ class POC_Avent {
         return self::launch_left() > 0 ? POC_Avent_Config::PRIX_LANCEMENT : POC_Avent_Config::PRIX;
     }
 
-    public static function is_over() {
-        $fin = new DateTime( POC_Avent_Config::FIN, new DateTimeZone( 'Europe/Paris' ) );
-        return time() > $fin->getTimestamp();
+    public static function is_open() {
+        return self::sold() < POC_Avent_Config::TOTAL;
     }
 
-    public static function is_open() {
-        return ! self::is_over() && self::sold() < POC_Avent_Config::TOTAL;
+    /** Avant le jour d'expédition groupée ? */
+    public static function before_shipping_day() {
+        $j = new DateTime( POC_Avent_Config::EXPEDITION . ' 00:00:00', new DateTimeZone( 'Europe/Paris' ) );
+        return time() < $j->getTimestamp();
+    }
+
+    public static function shipping_text() {
+        return self::before_shipping_day()
+            ? 'Expédition le 26 novembre au plus tard, réception avant le 1er décembre'
+            : 'Expédition sous 24 h ouvrées';
     }
 
     public static function is_preview() {
@@ -145,13 +150,9 @@ class POC_Avent {
     public function price_html( $html, $product ) {
         if ( ! self::is_calendar( $product ) ) return $html;
         if ( self::launch_left() > 0 ) {
-            return sprintf( '%s <small>prix de lancement, puis %s</small>', self::eur( POC_Avent_Config::PRIX_LANCEMENT ), self::eur( POC_Avent_Config::PRIX ) );
+            return sprintf( '%s <small>prix de lancement réservé aux %d premiers</small>', self::eur( POC_Avent_Config::PRIX_LANCEMENT ), POC_Avent_Config::LANCEMENT_QTE );
         }
         return self::eur( POC_Avent_Config::PRIX );
-    }
-
-    public function is_purchasable( $ok, $product ) {
-        return self::is_calendar( $product ) && self::is_over() ? false : $ok;
     }
 
     /** Dans le panier : les places restantes au prix de lancement, le reste à 89 € */
@@ -189,7 +190,7 @@ class POC_Avent {
 
     public function cart_item_data( $data, $item ) {
         if ( self::is_calendar( $item['data'] ) ) {
-            $data[] = [ 'key' => 'Prévente', 'value' => 'expédition au plus tard le 26 novembre, en point relais (offert)' ];
+            $data[] = [ 'key' => 'Livraison', 'value' => self::shipping_text() . ', en point relais (offert)' ];
         }
         return $data;
     }
@@ -224,10 +225,7 @@ class POC_Avent {
         }
         if ( ! $has || ! $email || ! in_array( $email->id, [ 'customer_processing_order', 'customer_on_hold_order' ], true ) ) return;
 
-        $txt = sprintf(
-            'Prévente du Calendrier de l’Avent : expédition au plus tard le 26 novembre en point relais, pour une réception avant le 1er décembre. Si moins de %d calendriers sont réservés au 19 novembre au soir, la prévente est annulée et vous êtes intégralement remboursé.',
-            POC_Avent_Config::SEUIL
-        );
+        $txt = 'Calendrier de l’Avent Padel Occas : ' . lcfirst( self::shipping_text() ) . ', en point relais Mondial Relay.';
         if ( $plain_text ) {
             echo "\n" . $txt . "\n\n";
         } else {
@@ -318,28 +316,27 @@ class POC_Avent {
           <div class="poc-av-hero__infos">
             <p class="poc-av-eyebrow">Prévente · Série limitée de <?php echo (int) $total; ?> exemplaires numérotés</p>
             <h1>Calendrier de l’Avent Padel&nbsp;Occas</h1>
-            <p class="poc-av-lead">24 sachets kraft numérotés, avec un vrai objet de padel dans chacun. Le 24 : un tube de 3 balles neuves et un bon d’achat de 15 € sur une raquette d’occasion.</p>
+            <p class="poc-av-lead">24 sachets kraft numérotés à accrocher, avec un vrai objet de padel dans chacun. Le 24 : un tube de 3 balles neuves et un bon d’achat de 15&nbsp;€ sur une raquette d’occasion.</p>
 
             <div class="poc-av-prix">
               <span class="poc-av-prix__montant"><?php echo esc_html( self::eur( self::unit_price() ) ); ?></span>
-              <span class="poc-av-prix__note"><?php echo $left > 0 ? 'prix de lancement pour les ' . (int) POC_Avent_Config::LANCEMENT_QTE . ' premiers, puis ' . esc_html( self::eur( POC_Avent_Config::PRIX ) ) : 'prix de prévente'; ?></span>
+              <?php if ( $left > 0 ) : ?><span class="poc-av-prix__note">prix de lancement réservé aux <?php echo (int) POC_Avent_Config::LANCEMENT_QTE; ?> premiers</span><?php endif; ?>
             </div>
 
             <div class="poc-av-compteur">
               <div class="poc-av-compteur__ligne"><strong><?php echo (int) $sold; ?> / <?php echo (int) $total; ?></strong> réservés</div>
-              <div class="poc-av-barre" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo (int) $total; ?>" aria-valuenow="<?php echo (int) $sold; ?>"><span style="width:<?php echo (int) $pct; ?>%"></span><i style="left:<?php echo (int) round( 100 * POC_Avent_Config::SEUIL / $total ); ?>%"></i></div>
+              <div class="poc-av-barre" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo (int) $total; ?>" aria-valuenow="<?php echo (int) $sold; ?>"><span style="width:<?php echo (int) $pct; ?>%"></span></div>
               <?php if ( $left > 0 && self::is_open() ) : ?>
                 <p class="poc-av-compteur__reste">Plus que <strong><?php echo (int) $left; ?></strong> au prix de lancement</p>
               <?php endif; ?>
-              <p class="poc-av-compteur__seuil"><?php echo $sold >= POC_Avent_Config::SEUIL ? 'Seuil de ' . (int) POC_Avent_Config::SEUIL . ' réservations atteint : la prévente est confirmée.' : 'La prévente est confirmée dès ' . (int) POC_Avent_Config::SEUIL . ' réservations. Sinon, tout le monde est remboursé.'; ?></p>
             </div>
 
             <?php echo $this->buy_form( $p ); ?>
 
             <ul class="poc-av-rassure">
-              <li>Expédition au plus tard le <strong>26 novembre</strong>, réception avant le 1er décembre</li>
+              <li><?php echo esc_html( self::shipping_text() ); ?></li>
               <li>Point relais Mondial Relay <strong>offert</strong></li>
-              <li>Remboursement intégral si moins de <?php echo (int) POC_Avent_Config::SEUIL; ?> réservations au 19 novembre</li>
+              <li>Série limitée à <?php echo (int) $total; ?> exemplaires numérotés</li>
             </ul>
           </div>
         </section>
@@ -348,9 +345,6 @@ class POC_Avent {
     }
 
     private function buy_form( $p ) {
-        if ( self::is_over() ) {
-            return '<p class="poc-av-statut">La prévente est terminée.</p>';
-        }
         if ( self::sold() >= POC_Avent_Config::TOTAL || ! $p->is_in_stock() ) {
             return '<p class="poc-av-statut">Les 50 calendriers sont réservés. Merci !</p>';
         }
@@ -373,16 +367,13 @@ class POC_Avent {
         );
     }
 
+    /** 24 balles numérotées ; seul le 24 est dévoilé (le contenu des autres reste une surprise) */
     public function sc_grille() {
-        $out = '<ol class="poc-av-grille">';
-        foreach ( POC_Avent_Config::JOURS as $n => $objet ) {
-            $out .= sprintf(
-                '<li class="poc-av-jour%s"><span class="poc-av-jour__sachet">%s</span><span class="poc-av-jour__objet"><span class="screen-reader-text">Jour %d : </span>%s</span></li>',
-                24 === $n ? ' poc-av-jour--24' : '',
-                self::ball( $n ),
-                $n,
-                esc_html( $objet )
-            );
+        $out = '<ol class="poc-av-grille" aria-label="Les 24 sachets du calendrier">';
+        for ( $n = 1; $n <= 24; $n++ ) {
+            $out .= 24 === $n
+                ? '<li class="poc-av-jour poc-av-jour--24">' . self::ball( 24 ) . '<span class="poc-av-jour__objet">3 balles + bon de 15&nbsp;€</span></li>'
+                : sprintf( '<li class="poc-av-jour">%s<span class="screen-reader-text">Sachet %d : surprise</span></li>', self::ball( $n ), $n );
         }
         return $out . '</ol>';
     }
@@ -462,12 +453,12 @@ class POC_Avent {
 .poc-av-rassure li{position:relative;padding-left:22px}
 .poc-av-rassure li::before{content:"";position:absolute;left:2px;top:.45em;width:10px;height:10px;border-radius:50%;background:var(--av-orange)}
 
-.poc-av-grille{list-style:none;padding:0!important;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.poc-av-grille{list-style:none;padding:0!important;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .poc-av-grille li+li{margin-top:0}
-.poc-av-jour{background:#fff;border:1px solid var(--av-line);border-radius:16px;padding:12px 8px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
-.poc-av-jour__objet{font-size:13px;line-height:1.3;color:var(--av-ink)}
+.poc-av-jour{background:#fff;border:1px solid var(--av-line);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;min-height:84px}
+.poc-av-jour__objet{font-size:13px;line-height:1.3;color:var(--av-ink2)}
 .poc-av-jour--24{background:var(--av-nuit);border-color:var(--av-nuit)}
-.poc-av-jour--24 .poc-av-jour__objet{color:#fff;font-weight:600}
+.poc-av-jour--24 .poc-av-jour__objet{color:#fff;font-weight:600;font-size:11px;line-height:1.25}
 .poc-av-balle{position:relative;display:inline-block;width:52px;height:52px;flex:none}
 .poc-av-balle--lg{width:72px;height:72px}
 .poc-av-balle svg{display:block;width:100%;height:100%}
@@ -502,11 +493,11 @@ class POC_Avent {
 body.po-r .poc-av a.po-btn,body.po-r .poc-av a.po-btn:hover{color:var(--av-nuit);text-decoration:none}
 .poc-av-page .po-contenu>p:empty{display:none}
 
-@media (min-width:600px){.poc-av-grille{grid-template-columns:repeat(4,1fr)}}
+@media (min-width:600px){.poc-av-grille{grid-template-columns:repeat(6,1fr)}}
 @media (min-width:960px){
   .poc-av-hero{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:48px;align-items:start;padding-top:24px}
   .poc-av-hero__visuel{position:sticky;top:24px}
-  .poc-av-grille{grid-template-columns:repeat(6,1fr);gap:12px}
+  .poc-av-grille{grid-template-columns:repeat(8,1fr);gap:12px}
   .poc-av-etapes{grid-template-columns:repeat(3,1fr)}
   .poc-av-sec{padding-top:64px}
   .poc-av-valeur{padding:36px 40px}
