@@ -24,7 +24,7 @@ class POC_Avent_Config {
     const COMPTEUR_DES   = 10;   // « X / 100 réservés » affiché à partir de N réservations (un compteur à 0 rassure peu)
 
     // Interrupteurs. Mettre true au moment de publier, false pour retirer.
-    const MISE_EN_AVANT  = false;  // bandeau sur l'accueil + lien dans le menu principal
+    const MISE_EN_AVANT  = true;   // bandeau sur l'accueil + lien dans le menu principal (false pour retirer)
     const VALEUR_VALIDEE = true;   // bloc « plus de 130 € de matériel » (chiffre confirmé)
     const VALEUR_TEXTE   = 'Plus de 130 € de matériel'; // pour mémoire
 
