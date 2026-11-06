@@ -1,5 +1,7 @@
 # Prompts OpenArt — Calendrier de l'Avent Padel Occas
 
+> Abandonné : la vidéo générée ne montrait pas assez le padel. Pour la vidéo, on part des visuels maison (raquettes, balles, terrain).
+
 ## 1. Vidéo de pub (image → vidéo) — le meilleur usage de tes crédits
 
 Dans OpenArt, choisis **Image to Video**, importe `source/calendrier.jpg` (ta photo du calendrier), format **9:16** si proposé, durée **5 à 8 secondes**.
@@ -15,8 +17,6 @@ Si l'outil a un champ « negative prompt » :
 **À vérifier** : les numéros ne doivent pas se déformer pendant la vidéo. Si ça arrive, relance avec un mouvement plus faible (« very subtle camera movement »).
 
 ## 2. Image d'ambiance : le calendrier sur un terrain de padel décoré pour Noël
-
-Pas de raquette ni de balles dans l'image : les gens croiraient qu'elles sont dans le calendrier.
 
 Choisis **Text to Image** ou **Image to Image** avec ta photo, format **4:5**.
 

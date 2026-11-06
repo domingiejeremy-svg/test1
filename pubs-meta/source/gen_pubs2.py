@@ -2,14 +2,14 @@ import sys, random
 P=sys.argv[1]
 random.seed(12)
 angles={
- 'pour-vous':{'eyebrow':'Du 1er au 24 décembre','titre':'Le calendrier de l’Avent<br>des joueurs de <span class="p">padel</span>.','sous':'Un vrai objet de padel dans chaque sachet<br>Plus de 130&nbsp;€ de matériel'},
+ 'pour-vous':{'eyebrow':'Du 1er au 24 décembre','titre':'Le calendrier de l’Avent<br>des joueurs de <span class="p">padel</span>.','sous':'Un vrai objet de padel dans chaque sachet<br>Livré avant le 1er&nbsp;décembre'},
  'cadeau':{'eyebrow':'Idée cadeau de Noël','titre':'Le cadeau de Noël<br>des joueurs de <span class="p">padel</span>.','sous':'24 surprises de padel à ouvrir en décembre<br>Livré avant le 1er&nbsp;décembre'},
 }
 formats={'carre':(1080,1080),'4x5':(1080,1350),'story':(1080,1920)}
 sizes={
- 'carre':dict(top=130,ph=470,gap=14,eb=19,t=58,m1=8,m2=10,s=23,m3=16,p=32,ps=18,lg=16),
- '4x5':dict(top=150,ph=660,gap=24,eb=21,t=68,m1=10,m2=12,s=26,m3=22,p=38,ps=21,lg=22),
- 'story':dict(top=290,ph=600,gap=24,eb=25,t=76,m1=12,m2=14,s=32,m3=26,p=48,ps=25,lg=20),
+ 'carre':dict(vr=46,vt=26,vs=150,vb=40,vsm=14,top=130,ph=470,gap=14,eb=19,t=58,m1=8,m2=10,s=23,m3=16,p=32,ps=18,lg=16),
+ '4x5':dict(vr=56,vt=30,vs=180,vb=48,vsm=16,top=150,ph=660,gap=24,eb=21,t=68,m1=10,m2=12,s=26,m3=22,p=38,ps=21,lg=22),
+ 'story':dict(vr=60,vt=34,vs=190,vb=50,vsm=17,top=290,ph=600,gap=24,eb=25,t=76,m1=12,m2=14,s=32,m3=26,p=48,ps=25,lg=20),
 }
 def garland(w, y0, sag, n):
     # fil + ampoules chaudes avec halo
@@ -78,6 +78,27 @@ def court(w,h,hz):
     # voile sombre pour la lisibilité du texte
     s+=f'<rect x="0" y="{y0:.0f}" width="{w}" height="{h-y0+40:.0f}" fill="url(#voile)"/>'
     return s
+def racket(x,y,sc,rot,accent='#FC9A20'):
+    g=f'<g transform="translate({x} {y}) rotate({rot}) scale({sc})">'
+    g+='<ellipse cx="0" cy="10" rx="92" ry="20" fill="#000" opacity=".25" transform="translate(30 330)"/>'
+    # tête
+    g+='<path d="M0 -150 C 80 -150 112 -95 112 -30 C 112 40 70 95 0 130 C -70 95 -112 40 -112 -30 C -112 -95 -80 -150 0 -150 Z" fill="#0E1442" stroke="#FFFFFF" stroke-width="9"/>'
+    g+=f'<path d="M-104 -20 C -104 -90 -60 -138 0 -140" fill="none" stroke="{accent}" stroke-width="10" stroke-linecap="round"/>'
+    import itertools
+    for r_,row in enumerate(range(-105,95,26)):
+        n=[3,5,6,7,7,7,6,5][min(r_,7)]
+        for c in range(n):
+            hx=(c-(n-1)/2)*26; g+=f'<circle cx="{hx:.0f}" cy="{row}" r="6.5" fill="#8FB2FF" opacity=".85"/>'
+    # cœur et manche
+    g+='<path d="M-34 118 L0 200 L34 118 Z" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linejoin="round"/>'
+    g+='<rect x="-15" y="196" width="30" height="120" rx="10" fill="#FFFFFF"/>'
+    for k in range(7): g+=f'<line x1="-15" y1="{206+k*16}" x2="15" y2="{214+k*16}" stroke="#E0E5F2" stroke-width="3"/>'
+    g+=f'<rect x="-19" y="308" width="38" height="14" rx="6" fill="{accent}"/>'
+    return g+'</g>'
+def pball(x,y,r):
+    return (f'<ellipse cx="{x+r*0.2:.0f}" cy="{y+r*0.95:.0f}" rx="{r*0.95:.0f}" ry="{r*0.28:.0f}" fill="#000" opacity=".28"/>'
+            f'<circle cx="{x}" cy="{y}" r="{r}" fill="#DDF23F"/><circle cx="{x-r*0.3:.0f}" cy="{y-r*0.35:.0f}" r="{r*0.35:.0f}" fill="#fff" opacity=".25"/>'
+            f'<path d="M{x-r*0.75:.0f} {y-r*0.6:.0f} c {r*0.5:.0f} {r*0.35:.0f} {r*0.5:.0f} {r*0.85:.0f} 0 {r*1.2:.0f} M{x+r*0.75:.0f} {y-r*0.6:.0f} c {-r*0.5:.0f} {r*0.35:.0f} {-r*0.5:.0f} {r*0.85:.0f} 0 {r*1.2:.0f}" fill="none" stroke="#fff" stroke-width="{max(2,r*0.12):.1f}" stroke-linecap="round"/>')
 CSS='''@font-face{font-family:Archivo;src:url(archivo.woff2);font-weight:400 900;font-stretch:62% 125%}
 @font-face{font-family:PlexMono;src:url(plexmono.woff2);font-weight:600}
 @font-face{font-family:PlexSans;src:url(plexsans.woff2);font-weight:400 700}
@@ -87,6 +108,10 @@ svg.deco{position:absolute;inset:0;z-index:1}
 .in{position:relative;z-index:2;padding-top:{top}px;display:flex;flex-direction:column;align-items:center}
 .photo{width:{ph}px;height:{ph}px;border-radius:26px;overflow:hidden;border:6px solid #F5E6C8;box-shadow:0 0 0 2px rgba(245,194,107,.6),0 22px 60px rgba(0,0,0,.55),0 0 80px rgba(255,190,90,.18);flex:none}
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.pw{position:relative}
+.valeur{position:absolute;right:-{vr}px;top:-{vt}px;width:{vs}px;height:{vs}px;border-radius:50%;background:#F5C26B;color:#060A2A;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(10deg);box-shadow:0 10px 30px rgba(0,0,0,.45);border:4px solid #fff;text-align:center;line-height:1}
+.valeur b{font-family:Archivo;font-weight:900;font-variation-settings:"wdth" 112;font-size:{vb}px;letter-spacing:-.03em;margin:4px 0}
+.valeur small{font-family:PlexSans;font-weight:700;font-size:{vsm}px;text-transform:uppercase;letter-spacing:.04em}
 .nc{margin-top:8px;font-family:PlexSans;font-size:15px;color:#8C93B0}
 .txt{text-align:center;margin-top:{gap}px;padding:0 50px}
 .eyebrow{display:inline-block;font-family:PlexMono;font-weight:600;font-size:{eb}px;letter-spacing:.1em;text-transform:uppercase;color:#060A2A;background:#F5C26B;border-radius:999px;padding:6px 16px}
@@ -97,6 +122,12 @@ h1 .p{color:#FC9A20}
 .prix small{font-family:PlexSans;font-weight:600;font-size:{ps}px}
 .logo{margin-top:{lg}px;display:flex;align-items:center;gap:10px;font-family:Archivo;font-weight:800;font-variation-settings:"wdth" 112;font-size:26px;letter-spacing:-.045em;color:#fff}
 .logo em{font-style:normal;color:#8AA4FF}.logo span{width:40px;height:40px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center}.logo img{width:34px;height:34px}'''
+def gear_for(f,w,h):
+    if f=='carre':
+        return racket(10,h-110,0.5,-40)+racket(w-10,h-110,0.5,40,'#8AA4FF')+pball(150,h-60,24)+pball(w-150,h-48,20)+pball(w-205,h-70,16)+sprig(w*0.5-140,h+30,0.5,-8)
+    if f=='4x5':
+        return racket(14,h-140,0.6,-38)+racket(w-14,h-140,0.6,38,'#8AA4FF')+pball(160,h-70,28)+pball(w-165,h-56,24)+pball(w-225,h-82,18)+sprig(w*0.5-160,h+34,0.55,-8)
+    return racket(95,1640,0.85,-24)+racket(w-95,1640,0.85,24,'#8AA4FF')+pball(190,1840,32)+pball(w-200,1860,28)+pball(w-270,1820,20)
 for a,tx in angles.items():
     for f,(w,h) in formats.items():
         d=dict(sizes[f],w=w,h=h); css=CSS
@@ -104,11 +135,11 @@ for a,tx in angles.items():
         gy={'carre':38,'4x5':44,'story':250}[f]
         deco=f'''<svg class="deco" viewBox="0 0 {w} {h}" width="{w}" height="{h}"><defs><radialGradient id="halo"><stop offset="0" stop-color="#FFD27A" stop-opacity=".9"/><stop offset="1" stop-color="#FFD27A" stop-opacity="0"/></radialGradient></defs>
 {court(w,h,{'carre':300,'4x5':360,'story':720}[f])}{snow(w,h,int(w*h/11000))}{garland(w,gy,26,11)}
-{sprig(-30,h-40,1.25,-18)}{sprig(w+30,h-40,1.25,-18,-1)}</svg>'''
+{gear_for(f,w,h)}</svg>'''
         html=f'''<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>{css}</style></head><body><div class="c">{deco}<div class="in">
-<div class="photo"><img src="calendrier.jpg" alt=""></div><div class="nc">Visuel non contractuel</div>
+<div class="pw"><div class="photo"><img src="calendrier.jpg" alt=""></div><div class="valeur"><small>plus de</small><b>130&nbsp;€</b><small>de matériel</small></div></div><div class="nc">Visuel non contractuel</div>
 <div class="txt"><div class="eyebrow">{tx['eyebrow']}</div><h1>{tx['titre']}</h1><div class="sous">{tx['sous']}</div>
-<div class="prix">79&nbsp;€ <small>pour les 30 premiers</small></div></div>
+<div class="prix">79&nbsp;€ <small>seulement · 30 premiers</small></div></div>
 <div class="logo"><span><img src="logo-mark-transparent.png" alt=""></span>PADEL<em>OCCAS</em></div></div></div></body></html>'''
         open(f'{P}/noel-{a}-{f}.html','w').write(html)
 print('ok')
