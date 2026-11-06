@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Padel Occas — Bandeau cookies + pixel Meta
- * Description: Bandeau de consentement (Accepter / Refuser, conforme CNIL) et pixel Meta chargé uniquement après accord : PageView, ViewContent, AddToCart, InitiateCheckout, Purchase (avec montant).
- * Version:     1.0.0
+ * Description: Bandeau de consentement (Accepter / Refuser, conforme CNIL), mode consentement Google v2, et pixel Meta chargé uniquement après accord : PageView, ViewContent, AddToCart, InitiateCheckout, Purchase (avec montant).
+ * Version:     1.1.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  */
@@ -29,6 +29,7 @@ class POC_Pixel {
     private function __construct() {
         add_action( 'woocommerce_add_to_cart', [ $this, 'remember_add_to_cart' ], 10, 4 );
         add_action( 'wp', [ $this, 'collect_events' ] );
+        add_action( 'wp_head', [ $this, 'print_google_consent_default' ], 1 );
         add_action( 'wp_footer', [ $this, 'print_banner_and_pixel' ], 99 );
         add_filter( 'wp_nav_menu_items', [ $this, 'footer_link' ], 10, 2 );
     }
@@ -109,6 +110,19 @@ class POC_Pixel {
         return $items . '<li class="menu-item"><a href="#cookies" class="poc-cookies-ouvrir">Gérer les cookies</a></li>';
     }
 
+    /* ── Google (mode consentement v2) : tout refusé par défaut, accordé après « Accepter » ── */
+
+    public function print_google_consent_default() {
+        if ( is_admin() ) return;
+        ?>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+(function(){var ok=/(?:^|; )<?php echo esc_js( self::COOKIE ); ?>=oui(?:;|$)/.test(document.cookie)?'granted':'denied';
+gtag('consent','default',{ad_storage:ok,ad_user_data:ok,ad_personalization:ok,analytics_storage:ok,wait_for_update:500});})();
+</script>
+        <?php
+    }
+
     /* ── Bandeau + pixel ─────────────────────────────────────────────────── */
 
     public function print_banner_and_pixel() {
@@ -121,7 +135,7 @@ class POC_Pixel {
         $cfg = [ 'pixel' => self::PIXEL_ID, 'cookie' => self::COOKIE, 'events' => $this->events ];
         ?>
 <div id="poc-cookies" class="poc-cookies" role="dialog" aria-live="polite" aria-label="Cookies" hidden>
-  <p>Nous utilisons des cookies pour mesurer l’efficacité de nos publicités (Meta). Ils ne sont déposés qu’avec votre accord. <a href="<?php echo esc_url( get_privacy_policy_url() ?: home_url( '/politique-de-confidentialite/' ) ); ?>">En savoir plus</a></p>
+  <p>Nous utilisons des cookies pour mesurer l’efficacité de nos publicités (Google et Meta). Ils ne sont déposés qu’avec votre accord. <a href="<?php echo esc_url( get_privacy_policy_url() ?: home_url( '/politique-de-confidentialite/' ) ); ?>">En savoir plus</a></p>
   <div class="poc-cookies__btns">
     <button type="button" data-choix="non">Refuser</button>
     <button type="button" data-choix="oui">Accepter</button>
@@ -143,6 +157,7 @@ class POC_Pixel {
   function set(v){document.cookie=C.cookie+'='+v+'; Max-Age='+(60*60*24*182)+'; Path=/; SameSite=Lax; Secure';}
   function pixel(){
     if(started)return;started=true;
+    if(window.gtag)gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
     fbq('init',C.pixel);fbq('track','PageView');
     C.events.forEach(function(e){e.id?fbq('track',e.name,e.data,{eventID:e.id}):fbq('track',e.name,e.data);});
@@ -151,7 +166,7 @@ class POC_Pixel {
   if(v==='oui')pixel(); else if(v!=='non')box.hidden=false;
   function purge(){['_fbp','_fbc'].forEach(function(n){var h=location.hostname.replace(/^www\./,'');document.cookie=n+'=; Max-Age=0; Path=/';document.cookie=n+'=; Max-Age=0; Path=/; Domain=.'+h;});}
   if(v==='non')purge();
-  box.addEventListener('click',function(ev){var c=ev.target.getAttribute('data-choix');if(!c)return;set(c);box.hidden=true;if(c==='oui')pixel();else purge();});
+  box.addEventListener('click',function(ev){var c=ev.target.getAttribute('data-choix');if(!c)return;set(c);box.hidden=true;if(c==='oui')pixel();else{purge();if(window.gtag)gtag('consent','update',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'});}});
   document.addEventListener('click',function(ev){var a=ev.target.closest&&ev.target.closest('.poc-cookies-ouvrir');if(!a)return;ev.preventDefault();box.hidden=false;});
 })();
 </script>
