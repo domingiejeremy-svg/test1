@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archivo;src:url(archivo.woff2);font-weight:400 900;font-stretch:62% 125%}
+@font-face{font-family:PlexMono;src:url(plexmono.woff2);font-weight:600}
+@font-face{font-family:PlexSans;src:url(plexsans.woff2);font-weight:400 700}
+html,body{margin:0;width:1640px;height:624px;overflow:hidden;background:#060A2A}
+.c{position:relative;width:1640px;height:624px;overflow:hidden;background:radial-gradient(ellipse 70% 90% at 50% 45%,#111A50 0%,#060A2A 70%)}
+svg.terrain{position:absolute;inset:0}
+.bloc{position:absolute;left:50%;top:50%;transform:translate(-50%,-54%);display:flex;align-items:center;gap:28px}
+.rond{width:148px;height:148px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.rond img{width:132px;height:132px}
+.nom{font-family:Archivo;font-weight:800;font-variation-settings:"wdth" 112;font-size:94px;letter-spacing:-.045em;line-height:1;color:#fff}
+.nom em{font-style:normal;color:#8AA4FF}
+.tag{margin-top:14px;font-family:PlexMono;font-weight:600;font-size:18px;letter-spacing:.12em;text-transform:uppercase;color:#FC9A20}
+.bas{position:absolute;left:0;right:0;bottom:62px;text-align:center;font-family:PlexSans;font-size:24px;color:#C9CFE4;letter-spacing:.01em}
+.bas b{color:#fff;font-weight:600}
+.bas i{font-style:normal;color:#FC9A20;margin:0 14px}
+</style></head><body><div class="c">
+<svg class="terrain" viewBox="0 0 1640 624" aria-hidden="true">
+  <g fill="none" stroke="#3D6BFF" stroke-opacity=".16" stroke-width="3">
+    <rect x="70" y="40" width="1500" height="544" rx="6"/>
+    <line x1="820" y1="40" x2="820" y2="584" stroke-opacity=".28" stroke-dasharray="2 10"/>
+    <line x1="330" y1="40" x2="330" y2="584"/><line x1="1310" y1="40" x2="1310" y2="584"/>
+    <line x1="330" y1="312" x2="820" y2="312"/><line x1="820" y1="312" x2="1310" y2="312"/>
+  </g>
+  <g>
+    <circle cx="1488" cy="120" r="34" fill="#FC9A20" opacity=".9"/><path d="M1462 102c13 9 13 27 0 36M1514 102c-13 9-13 27 0 36" fill="none" stroke="#fff" stroke-width="3" opacity=".8"/>
+    <circle cx="176" cy="500" r="22" fill="#FC9A20" opacity=".55"/>
+  </g>
+</svg>
+<div class="bloc">
+  <div class="rond"><img src="logo-mark-transparent.png" alt=""></div>
+  <div><div class="nom">PADEL<em>OCCAS</em></div><div class="tag">Raquettes de padel d’occasion, contrôlées</div></div>
+</div>
+<div class="bas"><b>Contrôlées une par une</b><i>•</i>Réparation dès 30&nbsp;€<i>•</i><b>padeloccas.fr</b></div>
+</div></body></html>
