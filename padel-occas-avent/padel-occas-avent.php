@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Padel Occas — Prévente Calendrier de l'Avent
  * Description: Prix de lancement automatique (79 € pour les 30 premiers, puis 89 €), compteur sur 100, vente jusqu'à épuisement, point relais seul et offert, grille des 24 sachets, lien d'aperçu secret, mise en avant accueil + menu.
- * Version:     1.3.0
+ * Version:     1.4.0
  * Author:      Padel Occas
  * License:     GPL v2 or later
  */
@@ -21,6 +21,7 @@ class POC_Avent_Config {
     const PRIX           = 89;                     // prix après les N premiers
     const EXPEDITION     = '2026-11-26';           // commandes passées avant : expédiées ce jour-là au plus tard
     const MAX_PAR_COMMANDE = 5;
+    const COMPTEUR_DES   = 10;   // « X / 100 réservés » affiché à partir de N réservations (un compteur à 0 rassure peu)
 
     // Interrupteurs. Mettre true au moment de publier, false pour retirer.
     const MISE_EN_AVANT  = false;  // bandeau sur l'accueil + lien dans le menu principal
@@ -73,12 +74,17 @@ class POC_Avent {
         add_filter( 'body_class',    [ $this, 'body_class' ] );
         add_action( 'wp_head',       [ $this, 'print_css' ], 30 );
         add_action( 'wp_body_open',  [ $this, 'home_banner' ] );
+        add_action( 'wp_footer',     [ $this, 'sticky_bar' ] );
+        add_filter( 'rank_math/frontend/description', [ $this, 'seo_description' ] );
+        add_filter( 'rank_math/opengraph/facebook/og_description', [ $this, 'seo_description' ] );
+        add_filter( 'rank_math/opengraph/twitter/twitter_description', [ $this, 'seo_description' ] );
         add_filter( 'wp_nav_menu_items', [ $this, 'menu_item' ], 10, 2 );
 
         add_shortcode( 'poc_avent_hero',   [ $this, 'sc_hero' ] );
         add_shortcode( 'poc_avent_grille', [ $this, 'sc_grille' ] );
         add_shortcode( 'poc_avent_valeur', [ $this, 'sc_valeur' ] );
         add_shortcode( 'poc_avent_visuel', [ $this, 'sc_visuel' ] );
+        add_shortcode( 'poc_avent_rappel', [ $this, 'sc_rappel' ] );
     }
 
     /* ── État de la prévente ──────────────────────────────────────────────── */
@@ -283,6 +289,40 @@ class POC_Avent {
         return $li . $items;
     }
 
+    /** Rappel de prix au-dessus du bouton du bas */
+    public function sc_rappel() {
+        $txt = self::launch_left() > 0
+            ? sprintf( '%s pour les %d premiers, puis %s · point relais offert', self::eur( POC_Avent_Config::PRIX_LANCEMENT ), POC_Avent_Config::LANCEMENT_QTE, self::eur( POC_Avent_Config::PRIX ) )
+            : sprintf( '%s · point relais offert', self::eur( POC_Avent_Config::PRIX ) );
+        return '<span class="poc-av-cta-bas__prix">' . esc_html( $txt ) . '</span>';
+    }
+
+    public function seo_description( $desc ) {
+        if ( ! self::is_sales_page() ) return $desc;
+        $prix = self::launch_left() > 0
+            ? sprintf( '%s pour les %d premiers', self::eur( POC_Avent_Config::PRIX_LANCEMENT ), POC_Avent_Config::LANCEMENT_QTE )
+            : self::eur( POC_Avent_Config::PRIX );
+        return 'Calendrier de l’Avent padel : 24 sachets kraft, un vrai objet de padel dans chacun, plus de 130 € de matériel. ' . $prix . ', point relais offert.';
+    }
+
+    /** Mobile : barre « prix + Réserver » fixée en bas, masquée quand le bouton principal est à l'écran */
+    public function sticky_bar() {
+        if ( ! self::is_sales_page() || ! self::is_open() ) return;
+        printf(
+            '<div class="poc-av-barre-fixe" hidden><span><strong>%s</strong>%s</span><a class="po-btn po-btn--rouge" href="#reserver">Réserver</a></div>',
+            esc_html( self::eur( self::unit_price() ) ),
+            self::launch_left() > 0 ? ' <small>prix de lancement</small>' : ''
+        );
+        ?>
+<script>
+(function(){var b=document.querySelector('.poc-av-barre-fixe'),f=document.querySelector('.poc-av-achat')||document.querySelector('#reserver'),c=document.querySelector('.poc-av-cta-bas');
+if(!b||!f||!('IntersectionObserver' in window))return;var vis={};
+var io=new IntersectionObserver(function(es){es.forEach(function(e){vis[e.target===f?'f':'c']=e.isIntersecting});b.hidden=!!(vis.f||vis.c)||window.scrollY<200;},{threshold:0});
+io.observe(f);if(c)io.observe(c);window.addEventListener('scroll',function(){if(window.scrollY<200)b.hidden=true;else if(!vis.f&&!vis.c)b.hidden=false;},{passive:true});})();
+</script>
+        <?php
+    }
+
     /* ── Blocs de la page ────────────────────────────────────────────────── */
 
     private static function ball( $n, $size = 'md' ) {
@@ -323,15 +363,21 @@ class POC_Avent {
               <?php if ( $left > 0 ) : ?><span class="poc-av-prix__note">prix de lancement réservé aux <?php echo (int) POC_Avent_Config::LANCEMENT_QTE; ?> premiers, puis <?php echo esc_html( self::eur( POC_Avent_Config::PRIX ) ); ?></span><?php endif; ?>
             </div>
 
+            <?php $show_total = $sold >= POC_Avent_Config::COMPTEUR_DES; $show_left = $left > 0 && self::is_open(); ?>
+            <?php if ( $show_total || $show_left ) : ?>
             <div class="poc-av-compteur">
-              <div class="poc-av-compteur__ligne"><strong><?php echo (int) $sold; ?> / <?php echo (int) $total; ?></strong> réservés</div>
-              <div class="poc-av-barre" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo (int) $total; ?>" aria-valuenow="<?php echo (int) $sold; ?>"><span style="width:<?php echo (int) $pct; ?>%"></span></div>
-              <?php if ( $left > 0 && self::is_open() ) : ?>
-                <p class="poc-av-compteur__reste">Plus que <strong><?php echo (int) $left; ?></strong> au prix de lancement</p>
+              <?php if ( $show_total ) : ?>
+                <div class="poc-av-compteur__ligne"><strong><?php echo (int) $sold; ?> / <?php echo (int) $total; ?></strong> réservés</div>
+                <div class="poc-av-barre" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo (int) $total; ?>" aria-valuenow="<?php echo (int) $sold; ?>"><span style="width:<?php echo (int) $pct; ?>%"></span></div>
+              <?php endif; ?>
+              <?php if ( $show_left ) : ?>
+                <p class="poc-av-compteur__reste">Plus que <strong><?php echo (int) $left; ?></strong> calendriers au prix de lancement</p>
               <?php endif; ?>
             </div>
+            <?php endif; ?>
 
             <?php echo $this->buy_form( $p ); ?>
+            <p class="poc-av-paiement">Paiement sécurisé par Stripe : carte bancaire, Apple Pay ou Klarna.</p>
 
             <ul class="poc-av-rassure">
               <li><?php echo esc_html( self::shipping_text() ); ?></li>
@@ -447,22 +493,33 @@ class POC_Avent {
 .poc-av-qte select{height:52px;min-width:64px;border:1px solid var(--av-line);border-radius:12px;padding:0 10px;font-size:16px;background:#fff}
 .poc-av-achat .po-btn{flex:1;min-height:56px;font-size:16px}
 .poc-av-achat .po-btn[disabled]{opacity:.55;cursor:not-allowed}
+.poc-av-paiement{margin:8px 0 0;font-size:12px;color:#828AA3}
+.poc-av-barre-fixe{position:fixed;left:0;right:0;bottom:0;z-index:90;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(6,10,42,.96);color:#fff;box-shadow:0 -6px 20px rgba(6,10,42,.18)}
+.poc-av-barre-fixe[hidden]{display:none}
+.poc-av-barre-fixe strong{font-family:"Archivo",sans-serif;font-variation-settings:"wdth" 112;font-size:22px}
+.poc-av-barre-fixe small{font-size:12px;color:#C9CFE4;margin-left:4px}
+.poc-av-barre-fixe .po-btn{padding:12px 22px}
+body.po-r .poc-av-barre-fixe a.po-btn{color:var(--av-nuit);text-decoration:none}
+@media (max-width:959px){body.poc-av-page{padding-bottom:72px}}
+@media (min-width:960px){.poc-av-barre-fixe{display:none!important}}
 .poc-av-statut{margin:6px 0 0;font-size:14px;font-weight:600}
 .poc-av-statut--apercu{color:#B86A06;font-weight:500}
 .poc-av-rassure{list-style:none;padding:0!important;margin:14px 0 0;display:grid;gap:8px;font-size:14px;color:var(--av-ink2)}
 .poc-av-rassure li{position:relative;padding-left:22px}
 .poc-av-rassure li::before{content:"";position:absolute;left:2px;top:.45em;width:10px;height:10px;border-radius:50%;background:var(--av-orange)}
 
-.poc-av-grille{list-style:none;padding:0!important;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.poc-av-grille{list-style:none;padding:0!important;margin:0;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .poc-av-grille li+li{margin-top:0}
-.poc-av-jour{background:#fff;border:1px solid var(--av-line);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;min-height:84px}
+.poc-av-jour{background:#fff;border:1px solid var(--av-line);border-radius:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;aspect-ratio:1/1}
 .poc-av-jour__objet{font-size:13px;line-height:1.3;color:var(--av-ink2)}
 .poc-av-jour--24{background:var(--av-nuit);border-color:var(--av-nuit)}
 .poc-av-jour--24 .poc-av-jour__objet{color:#fff;font-weight:600;font-size:11px;line-height:1.25}
-.poc-av-balle{position:relative;display:inline-block;width:52px;height:52px;flex:none}
+.poc-av-balle{position:relative;display:inline-block;width:40px;height:40px;flex:none}
+@media (min-width:600px){.poc-av-balle{width:52px;height:52px}}
 .poc-av-balle--lg{width:72px;height:72px}
 .poc-av-balle svg{display:block;width:100%;height:100%}
-.poc-av-balle b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Archivo",sans-serif;font-variation-settings:"wdth" 112;font-weight:800;font-size:22px;color:var(--av-nuit)}
+.poc-av-balle b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Archivo",sans-serif;font-variation-settings:"wdth" 112;font-weight:800;font-size:17px;color:var(--av-nuit)}
+@media (min-width:600px){.poc-av-balle b{font-size:22px}}
 .poc-av-balle--lg b{font-size:30px}
 
 .poc-av-valeur{margin-top:44px;background:var(--av-nuit);color:#fff;border-radius:22px;padding:26px 20px}
@@ -490,14 +547,19 @@ class POC_Avent {
 .poc-av .po-faq details p{margin:0 0 16px;color:var(--av-ink2);font-size:15px;line-height:1.55}
 
 .poc-av-cta-bas{margin-top:40px;text-align:center}
+.poc-av-equipe{margin-top:44px;background:#fff;border:1px solid var(--av-line);border-radius:18px;padding:20px}
+.poc-av-equipe h2{font-size:clamp(22px,5vw,30px)}
+.poc-av-equipe p{margin:0;color:var(--av-ink2);font-size:15px;line-height:1.55}
+.poc-av-equipe p+p{margin-top:8px}
+.poc-av-cta-bas__prix{display:block;margin-bottom:12px;font-size:15px;color:var(--av-ink2)}
 body.po-r .poc-av a.po-btn,body.po-r .poc-av a.po-btn:hover{color:var(--av-nuit);text-decoration:none}
 .poc-av-page .po-contenu>p:empty{display:none}
 
-@media (min-width:600px){.poc-av-grille{grid-template-columns:repeat(6,1fr)}}
+@media (min-width:600px){.poc-av-grille{grid-template-columns:repeat(8,1fr);gap:10px}}
 @media (min-width:960px){
   .poc-av-hero{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:48px;align-items:start;padding-top:24px}
   .poc-av-hero__visuel{position:sticky;top:24px}
-  .poc-av-grille{grid-template-columns:repeat(8,1fr);gap:12px}
+  .poc-av-grille{grid-template-columns:repeat(12,1fr);gap:10px}
   .poc-av-etapes{grid-template-columns:repeat(3,1fr)}
   .poc-av-sec{padding-top:64px}
   .poc-av-valeur{padding:36px 40px}
